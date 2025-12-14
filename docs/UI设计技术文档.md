@@ -32,6 +32,7 @@
 | 二十三 | 登录状态持久化 | localStorage、Web 存储对比 |
 | 二十四 | 测试账号管理 | 预置账号、用户表结构 |
 | 二十五 | AI 新闻助手 | OpenAI 兼容 API、边缘触发侧边栏、交互优化 |
+| 二十六 | 局域网访问配置 | Vite/Spring Boot/Hono 主机绑定、防火墙 |
 
 
 
@@ -2076,4 +2077,124 @@ const handleMouseLeave = () => {
   │ 保持打开         │ 侧边栏关闭       │
   └─────────────────┴─────────────────┘
 ```
+
+
+---
+
+## 二十六、局域网访问配置
+
+### 26.1 概述
+
+配置项目支持局域网内其他设备访问，方便移动端测试和多设备调试。
+
+### 26.2 配置修改
+
+#### 26.2.1 前端 Vite 配置
+
+**文件**: `news-frontend/vite.config.js`
+
+```javascript
+server: {
+  port: 5173,
+  host: '0.0.0.0',  // 允许局域网访问
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true
+    }
+  }
+}
+```
+
+**关键配置**:
+- `host: '0.0.0.0'` - 绑定所有网络接口，允许外部访问
+
+#### 26.2.2 后端 Spring Boot 配置
+
+**文件**: `news-backend/src/main/resources/application.yml`
+
+```yaml
+server:
+  port: 8080
+  address: 0.0.0.0  # 允许局域网访问
+```
+
+**关键配置**:
+- `address: 0.0.0.0` - 绑定所有网络接口
+
+#### 26.2.3 DailyHotApi 配置
+
+**文件**: `DailyHotApi/src/index.ts`
+
+```typescript
+const apiServer = serve({
+  fetch: app.fetch,
+  port,
+  hostname: '0.0.0.0',  // 允许局域网访问
+});
+```
+
+**关键配置**:
+- `hostname: '0.0.0.0'` - @hono/node-server 的主机名配置
+
+### 26.3 修改文件清单
+
+| 文件路径 | 修改内容 |
+|----------|----------|
+| `news-frontend/vite.config.js` | 添加 `host: '0.0.0.0'` |
+| `news-backend/src/main/resources/application.yml` | 添加 `address: 0.0.0.0` |
+| `DailyHotApi/src/index.ts` | 添加 `hostname: '0.0.0.0'` |
+
+### 26.4 访问地址
+
+| 服务 | 本机访问 | 局域网访问 |
+|------|----------|------------|
+| 前端 | http://localhost:5173 | http://{IP}:5173 |
+| 后端 API | http://localhost:8080 | http://{IP}:8080 |
+| DailyHotApi | http://localhost:6688 | http://{IP}:6688 |
+
+**获取本机 IP**:
+```bash
+# Windows
+ipconfig
+
+# Linux/Mac
+ifconfig
+# 或
+ip addr
+```
+
+### 26.5 防火墙配置
+
+如果局域网设备无法访问，需要检查 Windows 防火墙设置：
+
+1. **控制面板** → **Windows Defender 防火墙** → **高级设置**
+2. **入站规则** → **新建规则**
+3. 选择 **端口** → **TCP** → 输入 `5173, 8080, 6688`
+4. 选择 **允许连接** → 完成
+
+或使用命令行：
+```powershell
+# 以管理员身份运行
+netsh advfirewall firewall add rule name="News System" dir=in action=allow protocol=tcp localport=5173,8080,6688
+```
+
+### 26.6 验证测试
+
+```bash
+# 测试各服务是否监听 0.0.0.0
+netstat -an | findstr "5173 8080 6688"
+
+# 期望输出（LISTENING 在 0.0.0.0 表示成功）:
+# TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING
+# TCP    0.0.0.0:6688    0.0.0.0:0    LISTENING
+# TCP    0.0.0.0:8080    0.0.0.0:0    LISTENING
+```
+
+### 26.7 注意事项
+
+1. **安全性**: 局域网访问配置仅适用于开发环境，生产环境应配置正确的域名和 HTTPS
+2. **IP 变化**: 如果使用 DHCP，本机 IP 可能会变化，需要重新获取
+3. **代理问题**: 前端的 API 代理仍指向 localhost:8080，在局域网设备上需要确保后端也可访问
+4. **移动端调试**: 手机等移动设备需要连接同一 WiFi 网络
 
