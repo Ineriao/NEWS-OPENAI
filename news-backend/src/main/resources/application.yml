@@ -11,8 +11,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/news_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:123456}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid 连接池配置
     druid:
@@ -41,19 +41,19 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:YourSuperSecretKeyForJWTTokenGenerationMustBeLongEnough123456}
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
 # 文件上传配置
 upload:
-  path: ${UPLOAD_PATH:D:/uploads/news/}
+  path: ${UPLOAD_PATH}
   max-size: 10485760
 
 # AI 配置 - OpenAI 兼容格式 (支持 Kimi/DeepSeek/OpenAI)
 ai:
-  api-key: ${AI_API_KEY:your-api-key-here}
-  base-url: ${AI_BASE_URL:https://api.moonshot.cn/v1}
-  model: ${AI_MODEL:moonshot-v1-8k}
+  api-key: ${AI_API_KEY}
+  base-url: ${AI_BASE_URL}
+  model: ${AI_MODEL}
 
 # 日志配置
 logging:

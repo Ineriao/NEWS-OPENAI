@@ -2198,3 +2198,273 @@ netstat -an | findstr "5173 8080 6688"
 3. **代理问题**: 前端的 API 代理仍指向 localhost:8080，在局域网设备上需要确保后端也可访问
 4. **移动端调试**: 手机等移动设备需要连接同一 WiFi 网络
 
+---
+
+## 二十七、敏感信息安全配置
+
+### 27.1 问题背景
+
+配置文件中直接写入 API Key、数据库密码等敏感信息，如果提交到 Git 仓库（尤其是公开仓库），会导致安全风险。
+
+**错误做法**（直接硬编码）：
+```yaml
+ai:
+  api-key: sk-xxxxxxxxxxxxx  # 危险！会被提交到 Git
+```
+
+### 27.2 解决方案：环境变量
+
+使用 `${VAR_NAME:default_value}` 语法，让配置从环境变量读取，本地开发使用 `.env` 文件管理。
+
+**application.yml 配置**：
+```yaml
+spring:
+  datasource:
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+
+jwt:
+  secret: ${JWT_SECRET:YourDefaultSecretKey}
+
+ai:
+  api-key: ${AI_API_KEY:your-api-key-here}
+  base-url: ${AI_BASE_URL:https://api.moonshot.cn/v1}
+  model: ${AI_MODEL:moonshot-v1-8k}
+```
+
+**语法说明**：
+- `${VAR_NAME}` - 从环境变量读取
+- `${VAR_NAME:default}` - 环境变量不存在时使用默认值
+
+### 27.3 .env 文件的作用
+
+`.env` 文件是一种通用的**环境变量配置文件**，用于：
+
+1. **存储敏感信息** - API Key、密码、密钥等
+2. **本地开发配置** - 每个开发者可以有自己的配置
+3. **分离配置与代码** - 配置不进入版本控制
+
+**文件**: `news-backend/.env`
+```properties
+# 数据库配置
+DB_USERNAME=root
+DB_PASSWORD=your_actual_password
+
+# JWT 配置
+JWT_SECRET=YourActualSecretKey
+
+# AI 配置
+AI_API_KEY=sk-your-actual-api-key
+AI_BASE_URL=https://api.moonshot.cn/v1
+AI_MODEL=moonshot-v1-8k
+```
+
+### 27.4 .env.example 模板文件
+
+`.env.example` 是提交到 Git 的**模板文件**，告诉其他开发者需要哪些环境变量：
+
+**文件**: `news-backend/.env.example`
+```properties
+# 数据库配置
+DB_USERNAME=root
+DB_PASSWORD=your_database_password
+
+# JWT 配置
+JWT_SECRET=YourSuperSecretKey
+
+# AI 配置
+AI_API_KEY=your-api-key-here
+AI_BASE_URL=https://api.moonshot.cn/v1
+AI_MODEL=moonshot-v1-8k
+```
+
+**使用方式**：
+```bash
+# 新开发者克隆项目后
+cp .env.example .env
+# 然后编辑 .env 填入实际值
+```
+
+### 27.5 .gitignore 配置
+
+确保 `.env` 文件不会被提交：
+
+```gitignore
+# 环境变量文件 (包含敏感信息)
+.env
+*.env.local
+```
+
+### 27.6 Spring Boot 加载 .env 文件
+
+本项目使用 **spring-dotenv** 库自动加载 `.env` 文件。
+
+**pom.xml 依赖**：
+```xml
+<dependency>
+    <groupId>me.paulschwarz</groupId>
+    <artifactId>spring-dotenv</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
+
+**工作流程**：
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ① Spring Boot 启动                                         │
+│       ↓                                                     │
+│  ② spring-dotenv 自动查找 .env 文件                          │
+│       ↓                                                     │
+│  ③ 读取 .env 内容，注入到 Spring Environment                 │
+│       ↓                                                     │
+│  ④ application.yml 中的 ${VAR} 被替换为实际值                │
+│       ↓                                                     │
+│  ⑤ 应用正常启动                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**启动方式**：
+```batch
+# 在 news-backend 目录下运行
+start.bat
+```
+
+启动脚本会：
+1. 设置 Java 17 环境（spring-dotenv 编译需要）
+2. spring-dotenv 自动加载 `.env` 文件
+3. 启动 Spring Boot 应用
+
+**注意事项**：
+- `.env` 文件必须放在项目根目录 (`news-backend/.env`)
+- 项目需要使用 **Java 17** 编译运行（Lombok 与 Java 25 不兼容）
+
+### 27.7 从 Git 历史清除敏感信息
+
+如果敏感信息已经提交到 Git 历史，需要使用 BFG Repo-Cleaner 清除：
+
+**步骤**：
+```bash
+# 1. 下载 BFG
+curl -O https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar
+
+# 2. 创建替换规则文件
+echo "sk-xxxxx==>***REMOVED***" > replacements.txt
+
+# 3. 运行 BFG
+java -jar bfg-1.14.0.jar --replace-text replacements.txt .
+
+# 4. 清理 Git 对象
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+
+# 5. 强制推送
+git push origin main --force
+```
+
+### 27.8 修改文件清单
+
+| 文件路径 | 修改内容 |
+|----------|----------|
+| `news-backend/src/main/resources/application.yml` | 敏感配置改用环境变量 |
+| `news-backend/.env.example` | 新增环境变量模板 |
+| `news-backend/.env` | 新增实际配置（不提交） |
+| `news-backend/.gitignore` | 忽略 .env 文件 |
+| `news-backend/start.bat` | 新增启动脚本（自动加载 .env） |
+| `.gitignore` | 根目录忽略规则 |
+
+### 27.9 安全最佳实践
+
+| 原则 | 说明 |
+|------|------|
+| **绝不提交敏感信息** | API Key、密码、密钥等绝不能出现在 Git 历史中 |
+| **使用环境变量** | 配置文件使用 `${VAR}` 语法引用环境变量 |
+| **提供模板文件** | `.env.example` 帮助其他开发者了解需要的配置 |
+| **定期轮换密钥** | 如果密钥泄露，立即更换 |
+| **检查 Git 历史** | 使用 `git log -p | grep "api-key"` 检查是否有泄露 |
+
+### 27.10 spring-dotenv 详解
+
+#### 27.10.1 什么是 spring-dotenv？
+
+**spring-dotenv** 是一个 Spring Boot 扩展库，让 Spring Boot 能够自动读取 `.env` 文件中的环境变量。
+
+#### 27.10.2 为什么需要它？
+
+| 问题 | 说明 |
+|------|------|
+| Spring Boot 原生不支持 | Spring Boot 只能读取**系统环境变量**，不会自动读取 `.env` 文件 |
+| `.env` 是通用标准 | Node.js、Python、Ruby 等都使用 `.env` 文件管理环境变量 |
+| spring-dotenv 填补空白 | 让 Spring Boot 也能像其他框架一样使用 `.env` |
+
+#### 27.10.3 工作原理对比
+
+**没有 spring-dotenv**：
+```
+.env 文件 ──────X──────→ Spring Boot (无法读取)
+
+必须手动设置系统环境变量:
+  set AI_API_KEY=xxx
+  mvn spring-boot:run
+```
+
+**有 spring-dotenv**：
+```
+.env 文件 ──→ spring-dotenv ──→ Spring Environment
+                   ↓
+             自动注入变量
+                   ↓
+      application.yml 的 ${VAR} 被替换
+```
+
+#### 27.10.4 各语言的 .env 加载库对比
+
+| 语言/框架 | .env 加载库 |
+|----------|-------------|
+| **Node.js** | `dotenv` |
+| **Python** | `python-dotenv` |
+| **Ruby** | `dotenv` |
+| **Spring Boot** | `spring-dotenv` |
+
+#### 27.10.5 使用方式
+
+**1. 添加依赖** (pom.xml)
+```xml
+<dependency>
+    <groupId>me.paulschwarz</groupId>
+    <artifactId>spring-dotenv</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
+
+**2. 创建 .env 文件**
+```properties
+DB_USERNAME=root
+DB_PASSWORD=123456
+AI_API_KEY=sk-xxxxx
+```
+
+**3. 在 application.yml 中引用**
+```yaml
+spring:
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+```
+
+**4. 启动应用** - 自动生效，无需额外配置
+
+#### 27.10.6 核心优势
+
+| 优势 | 说明 |
+|------|------|
+| **零配置** | 添加依赖后自动生效 |
+| **标准兼容** | 遵循 `.env` 文件通用格式 |
+| **开发友好** | 不需要每次手动 `set` 环境变量 |
+| **安全** | `.env` 加入 `.gitignore`，敏感信息不提交 |
+
+#### 27.10.7 注意事项
+
+1. **Java 版本兼容性**：本项目需使用 Java 17 编译（Lombok 与 Java 25 存在兼容问题）
+2. **.env 文件位置**：必须放在项目根目录 (`news-backend/.env`)
+3. **变量命名**：建议使用大写字母和下划线 (`DB_USERNAME`)
+
