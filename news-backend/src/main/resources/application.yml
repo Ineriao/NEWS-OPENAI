@@ -48,6 +48,12 @@ upload:
   path: D:/uploads/news/
   max-size: 10485760
 
+# AI 配置 - OpenAI 兼容格式 (支持 Kimi/DeepSeek/OpenAI)
+ai:
+  api-key: ***REMOVED_API_KEY***
+  base-url: ${AI_BASE_URL:https://api.moonshot.cn/v1}
+  model: ${AI_MODEL:moonshot-v1-8k}
+
 # 日志配置
 logging:
   level:

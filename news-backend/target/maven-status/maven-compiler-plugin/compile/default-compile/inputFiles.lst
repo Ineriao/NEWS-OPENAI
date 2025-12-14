@@ -1,9 +1,12 @@
+D:\Learn\WEBdesign\news-backend\src\main\java\com\news\dto\AiChatDTO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\HotSearchController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\entity\Category.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\common\Result.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\service\impl\NewsServiceImpl.java
+D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\AiController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\service\CommentService.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\entity\User.java
+D:\Learn\WEBdesign\news-backend\src\main\java\com\news\service\AiService.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\NewsController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\vo\PageVO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\vo\CommentVO.java
@@ -24,6 +27,7 @@ D:\Learn\WEBdesign\news-backend\src\main\java\com\news\vo\NewsListVO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\AuthController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\ExternalNewsController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\dao\CommentMapper.java
+D:\Learn\WEBdesign\news-backend\src\main\java\com\news\service\impl\AiServiceImpl.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\dto\RegisterDTO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\service\NewsService.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\vo\UserVO.java
@@ -42,6 +46,7 @@ D:\Learn\WEBdesign\news-backend\src\main\java\com\news\entity\Comment.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\CategoryController.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\NewsApplication.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\entity\ExternalNews.java
+D:\Learn\WEBdesign\news-backend\src\main\java\com\news\vo\AiChatVO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\dto\LoginDTO.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\entity\News.java
 D:\Learn\WEBdesign\news-backend\src\main\java\com\news\controller\CommentController.java

@@ -31,6 +31,7 @@
 | 二十二 | 密码安全与 BCrypt | 哈希 vs 加密、格式解析 |
 | 二十三 | 登录状态持久化 | localStorage、Web 存储对比 |
 | 二十四 | 测试账号管理 | 预置账号、用户表结构 |
+| 二十五 | AI 新闻助手 | OpenAI 兼容 API、边缘触发侧边栏、交互优化 |
 
 
 
@@ -501,6 +502,7 @@ element.style.setProperty('--y', `${mouse.sy}px`);
 | 详情 | `NewsDetail.vue` | 玻璃态卡片、深色评论头部 |
 | 404 | `NotFound.vue` | 居中玻璃态卡片、渐变文字 |
 | 预览页 | `preview-landing.html` | 波浪动画、渐变背景、底部导航 |
+| AI 助手 | `AiSidebar.vue` | 深色头部、玻璃态侧边栏、边缘触发 |
 
 ### 9.3 学习要点总结
 
@@ -531,12 +533,20 @@ element.style.setProperty('--y', `${mouse.sy}px`);
 | `news-frontend/src/views/front/Search.vue` | 玻璃态新闻列表 |
 | `news-frontend/src/views/front/NewsDetail.vue` | 玻璃态卡片、深色评论区头部 |
 | `news-frontend/src/views/front/NotFound.vue` | 玻璃态卡片、渐变文字 |
+| `news-frontend/src/App.vue` | 集成 AI 侧边栏组件 |
 
 ### 新增文件
 
 | 文件路径 | 说明 |
 |----------|------|
 | `news-frontend/preview-landing.html` | 带波浪动画的预览落地页 |
+| `news-frontend/src/api/ai.js` | AI API 封装 |
+| `news-frontend/src/components/AiSidebar.vue` | AI 侧边栏组件 |
+| `news-backend/.../dto/AiChatDTO.java` | AI 聊天请求 DTO |
+| `news-backend/.../vo/AiChatVO.java` | AI 聊天响应 VO |
+| `news-backend/.../service/AiService.java` | AI 服务接口 |
+| `news-backend/.../service/impl/AiServiceImpl.java` | AI 服务实现 |
+| `news-backend/.../controller/AiController.java` | AI 控制器 |
 
 ### 波浪动画关键修改
 
@@ -1791,3 +1801,279 @@ role=3 (总编)
 role=4 (管理员)
   └── 以上 + 用户管理、分类管理、评论管理
 ```
+
+
+---
+
+## 二十五、AI 新闻助手
+
+### 25.1 功能概述
+
+集成 AI 助手功能，帮助用户搜索、总结、解读新闻内容。
+
+| 特性 | 说明 |
+|------|------|
+| **API 格式** | OpenAI 兼容格式 (支持 Kimi/DeepSeek/OpenAI) |
+| **交互方式** | 鼠标靠近窗口右边缘触发侧边栏 |
+| **权限控制** | 登录用户可用；未登录显示登录提示 |
+| **UI 风格** | 与整体设计一致 (深色头部、玻璃拟态) |
+
+### 25.2 后端实现
+
+**新增文件**:
+
+| 文件 | 说明 |
+|------|------|
+| `dto/AiChatDTO.java` | 聊天请求 DTO |
+| `vo/AiChatVO.java` | 聊天响应 VO |
+| `service/AiService.java` | AI 服务接口 |
+| `service/impl/AiServiceImpl.java` | AI 服务实现 |
+| `controller/AiController.java` | AI 控制器 (需认证) |
+
+**配置文件** (`application.yml`):
+
+```yaml
+# AI 配置 - OpenAI 兼容格式
+ai:
+  api-key: sk-xxx                              # API Key
+  base-url: https://api.moonshot.cn/v1         # API 地址
+  model: moonshot-v1-8k                        # 模型名称
+```
+
+**支持的模型提供商**:
+
+| 提供商 | API Base URL | 模型示例 |
+|--------|-------------|----------|
+| Kimi | https://api.moonshot.cn/v1 | moonshot-v1-8k |
+| DeepSeek | https://api.deepseek.com/v1 | deepseek-chat |
+| OpenAI | https://api.openai.com/v1 | gpt-3.5-turbo |
+
+**API 接口**:
+
+```
+POST /api/ai/chat        # 普通对话 (需认证)
+POST /api/ai/summarize   # 总结新闻 (需认证)
+```
+
+### 25.3 前端实现
+
+**新增文件**:
+
+| 文件 | 说明 |
+|------|------|
+| `api/ai.js` | AI API 封装 |
+| `components/AiSidebar.vue` | AI 侧边栏组件 |
+
+**修改文件**:
+
+| 文件 | 修改内容 |
+|------|----------|
+| `App.vue` | 集成 AiSidebar 组件 (全局可用) |
+
+### 25.4 边缘触发交互
+
+```javascript
+// 右侧触发区域 - 20px 宽度
+<div class="ai-trigger-zone" @mouseenter="showSidebar"></div>
+
+// 悬浮提示标签 - 固定在屏幕右侧中间
+<div class="ai-trigger-tab" v-show="!isOpen" @mouseenter="showSidebar">
+  <el-icon><ChatDotRound /></el-icon>
+  <span>AI</span>
+</div>
+```
+
+**交互逻辑**:
+- 鼠标靠近右边缘或悬停标签 → 侧边栏滑出
+- 鼠标离开侧边栏 → 延迟 500ms 后收起
+- 鼠标重新进入侧边栏 → 取消关闭定时器
+- 点击关闭按钮 → 立即收起
+
+### 25.5 登录状态检查
+
+```vue
+<template>
+  <!-- 未登录提示 -->
+  <div v-if="!userStore.isLoggedIn" class="login-prompt">
+    <el-icon><Lock /></el-icon>
+    <p>登录后使用</p>
+    <el-button @click="goLogin">去登录</el-button>
+  </div>
+
+  <!-- 已登录：聊天界面 -->
+  <template v-else>
+    <!-- 消息列表 + 输入框 -->
+  </template>
+</template>
+```
+
+### 25.6 样式设计
+
+**触发标签** (与深色头部风格一致):
+```css
+.ai-trigger-tab {
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  border-radius: 8px 0 0 8px;
+}
+
+.ai-trigger-tab:hover .tab-text {
+  color: #FEE9A1;  /* 金黄色强调 */
+}
+```
+
+**侧边栏** (玻璃拟态):
+```css
+.ai-sidebar {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-header {
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+```
+
+**消息气泡**:
+```css
+/* 用户消息 - 深色 */
+.message.user .message-bubble {
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+}
+
+/* AI 消息 - 浅灰 */
+.message.ai .message-bubble {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.85);
+}
+```
+
+### 25.7 RestTemplate 调用 API
+
+```java
+// 构建请求头
+HttpHeaders headers = new HttpHeaders();
+headers.setContentType(MediaType.APPLICATION_JSON);
+headers.setBearerAuth(apiKey);  // Bearer Token 认证
+
+// 构建请求体 (OpenAI 格式)
+Map<String, Object> requestBody = new HashMap<>();
+requestBody.put("model", model);
+requestBody.put("temperature", 0.7);
+requestBody.put("messages", List.of(
+    Map.of("role", "system", "content", "你是新闻助手..."),
+    Map.of("role", "user", "content", userMessage)
+));
+
+// 发送请求
+HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+ResponseEntity<String> response = restTemplate.exchange(
+    baseUrl + "/chat/completions",
+    HttpMethod.POST,
+    entity,
+    String.class
+);
+```
+
+### 25.8 获取 API Key
+
+| 提供商 | 平台地址 |
+|--------|----------|
+| Kimi (月之暗面) | https://platform.moonshot.cn/ |
+| DeepSeek | https://platform.deepseek.com/ |
+| OpenAI | https://platform.openai.com/ |
+
+### 25.9 侧边栏交互优化
+
+#### 25.9.1 问题描述
+
+原始实现中，鼠标离开侧边栏时设置 300ms 延迟关闭，但鼠标重新进入时未取消定时器，导致：
+- 鼠标在侧边栏边缘移动时反复触发开关
+- 用户体验不佳，侧边栏"闪烁"
+
+#### 25.9.2 解决方案
+
+**核心改动**：
+
+```javascript
+// 离开定时器
+let leaveTimer = null
+
+// 取消离开定时器
+const cancelLeaveTimer = () => {
+  if (leaveTimer) {
+    clearTimeout(leaveTimer)
+    leaveTimer = null
+  }
+}
+
+// 显示侧边栏
+const showSidebar = () => {
+  cancelLeaveTimer()  // 显示时取消任何待执行的关闭定时器
+  isOpen.value = true
+}
+
+// 鼠标离开处理（延迟关闭）
+const handleMouseLeave = () => {
+  cancelLeaveTimer()  // 先清除之前的定时器
+  leaveTimer = setTimeout(() => {
+    hideSidebar()
+  }, 500)  // 增加延迟到 500ms
+}
+```
+
+**模板绑定**：
+
+```html
+<div class="ai-sidebar"
+     @mouseenter="cancelLeaveTimer"
+     @mouseleave="handleMouseLeave">
+```
+
+#### 25.9.3 优化要点
+
+| 改动 | 说明 |
+|------|------|
+| 添加 `cancelLeaveTimer()` | 统一管理定时器清除逻辑 |
+| `showSidebar()` 调用 `cancelLeaveTimer()` | 打开时确保无待执行的关闭 |
+| 侧边栏添加 `@mouseenter` | 鼠标进入时取消关闭定时器 |
+| 延迟从 300ms 增加到 500ms | 给用户更多移动缓冲时间 |
+
+#### 25.9.4 交互流程图
+
+```
+鼠标移入触发区/标签
+       ↓
+  showSidebar()
+       ↓
+  取消定时器 + 打开侧边栏
+       ↓
+  ┌─────────────────────────────────┐
+  │  鼠标在侧边栏内                  │
+  │       ↓                         │
+  │  cancelLeaveTimer() [mouseenter]│
+  │       ↓                         │
+  │  保持打开                        │
+  └─────────────────────────────────┘
+       ↓
+  鼠标离开侧边栏
+       ↓
+  handleMouseLeave()
+       ↓
+  设置 500ms 定时器
+       ↓
+  ┌─────────────────┬─────────────────┐
+  │ 500ms 内返回     │ 500ms 后未返回   │
+  │       ↓         │       ↓         │
+  │ cancelLeaveTimer│ hideSidebar()   │
+  │       ↓         │       ↓         │
+  │ 保持打开         │ 侧边栏关闭       │
+  └─────────────────┴─────────────────┘
+```
+
