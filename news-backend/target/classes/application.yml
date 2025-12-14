@@ -50,7 +50,7 @@ upload:
 
 # AI 配置 - OpenAI 兼容格式 (支持 Kimi/DeepSeek/OpenAI)
 ai:
-  api-key: ***REMOVED_API_KEY***
+  api-key: sk-4UoxH7zTXKt8CDNlAO6bb9Y9UKi7kFoTBiENxspB7A2CZZq0
   base-url: ${AI_BASE_URL:https://api.moonshot.cn/v1}
   model: ${AI_MODEL:moonshot-v1-8k}
 
