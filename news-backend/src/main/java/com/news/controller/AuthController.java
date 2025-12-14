@@ -1,0 +1,65 @@
+package com.news.controller;
+
+import com.news.common.Result;
+import com.news.dto.LoginDTO;
+import com.news.dto.RegisterDTO;
+import com.news.entity.User;
+import com.news.service.UserService;
+import com.news.vo.LoginVO;
+import com.news.vo.UserVO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * 认证控制器
+ * 处理登录、注册等不需要认证的接口
+ * 路径以 /api/auth 开头，会被 JWT 拦截器排除
+ */
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private UserService userService;
+
+    /**
+     * 用户注册
+     * POST /api/auth/register
+     */
+    @PostMapping("/register")
+    public Result<UserVO> register(@RequestBody RegisterDTO dto) {
+        try {
+            User user = userService.register(dto);
+            return Result.success("注册成功", UserVO.fromUser(user));
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 用户登录
+     * POST /api/auth/login
+     */
+    @PostMapping("/login")
+    public Result<LoginVO> login(@RequestBody LoginDTO dto) {
+        try {
+            LoginVO loginVO = userService.login(dto);
+            return Result.success("登录成功", loginVO);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 检查用户名是否可用
+     * GET /api/auth/check-username?username=xxx
+     */
+    @GetMapping("/check-username")
+    public Result<Boolean> checkUsername(@RequestParam String username) {
+        boolean exists = userService.existsByUsername(username);
+        if (exists) {
+            return Result.error("用户名已存在");
+        }
+        return Result.success("用户名可用", true);
+    }
+}
