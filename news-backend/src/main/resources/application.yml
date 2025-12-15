@@ -59,3 +59,11 @@ ai:
 logging:
   level:
     com.news: debug
+
+# 定时任务配置
+scheduler:
+  enabled: true                           # 是否启用定时任务
+  hot-search:
+    cron: "0 0/30 * * * ?"               # 热搜刷新：每30分钟
+  external-news:
+    cron: "0 0 * * * ?"                  # 外部新闻刷新：每小时整点
