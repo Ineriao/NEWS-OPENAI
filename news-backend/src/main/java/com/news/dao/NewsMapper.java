@@ -76,6 +76,12 @@ public interface NewsMapper extends BaseMapper<News> {
     void incrementViewCount(@Param("id") Long id);
 
     /**
+     * 批量增加浏览次数（用于定时同步）
+     */
+    @Update("UPDATE news SET view_count = view_count + #{delta} WHERE id = #{id}")
+    void incrementViewCountBy(@Param("id") Long id, @Param("delta") int delta);
+
+    /**
      * 增加点赞数
      */
     @Update("UPDATE news SET like_count = like_count + 1 WHERE id = #{id}")

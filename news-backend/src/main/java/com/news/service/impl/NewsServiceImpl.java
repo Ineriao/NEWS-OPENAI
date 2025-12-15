@@ -10,6 +10,7 @@ import com.news.entity.News;
 import com.news.entity.User;
 import com.news.service.CategoryService;
 import com.news.service.NewsService;
+import com.news.service.ViewCountService;
 import com.news.vo.NewsDetailVO;
 import com.news.vo.NewsListVO;
 import com.news.vo.PageVO;
@@ -34,6 +35,9 @@ public class NewsServiceImpl implements NewsService {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private ViewCountService viewCountService;
 
     // ==================== 查询方法 ====================
 
@@ -68,8 +72,8 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public NewsDetailVO getDetailAndView(Long id) {
-        // 增加浏览量
-        newsMapper.incrementViewCount(id);
+        // 异步累积浏览量到 Redis
+        viewCountService.incrementViewCount(id);
         return getDetail(id);
     }
 

@@ -47,6 +47,9 @@ public class CacheConstants {
     /** 新闻详情 Key 前缀 */
     public static final String KEY_NEWS_DETAIL = "detail:";
 
+    /** 浏览量增量 Key 前缀 */
+    public static final String KEY_VIEW_COUNT_DELTA = "viewCount:delta:";
+
     private CacheConstants() {
         // 私有构造函数，防止实例化
     }

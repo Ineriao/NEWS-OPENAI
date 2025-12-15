@@ -3,6 +3,7 @@ package com.news.task;
 import com.news.controller.TaskController;
 import com.news.service.ExternalNewsService;
 import com.news.service.HotSearchService;
+import com.news.service.ViewCountService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class ScheduledTasks {
 
     @Autowired
     private ExternalNewsService externalNewsService;
+
+    @Autowired
+    private ViewCountService viewCountService;
 
     @Value("${scheduler.enabled:true}")
     private boolean schedulerEnabled;
@@ -76,6 +80,23 @@ public class ScheduledTasks {
             logger.info("[定时任务] 外部新闻数据刷新完成 - {}", endTime);
         } catch (Exception e) {
             logger.error("[定时任务] 外部新闻数据刷新失败: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 同步浏览量到数据库
+     * 每5分钟执行一次
+     */
+    @Scheduled(cron = "0 */5 * * * ?")
+    public void syncViewCounts() {
+        if (!schedulerEnabled) {
+            return;
+        }
+
+        try {
+            viewCountService.syncViewCountsToDb();
+        } catch (Exception e) {
+            logger.error("[定时任务] 浏览量同步失败: {}", e.getMessage(), e);
         }
     }
 
