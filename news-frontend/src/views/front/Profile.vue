@@ -30,6 +30,24 @@
             <el-descriptions :column="1" border class="account-info">
               <el-descriptions-item label="用户ID">{{ userStore.userId }}</el-descriptions-item>
               <el-descriptions-item label="用户名">{{ userStore.username }}</el-descriptions-item>
+              <el-descriptions-item label="邮箱">
+                <template v-if="!isEditingEmail">
+                  <span>{{ userEmail || '未设置' }}</span>
+                  <el-button type="primary" link size="small" @click="startEditEmail" style="margin-left: 10px;">
+                    编辑
+                  </el-button>
+                </template>
+                <template v-else>
+                  <el-input
+                    v-model="editEmailForm.email"
+                    placeholder="请输入邮箱"
+                    style="width: 250px; margin-right: 10px;"
+                    size="small"
+                  />
+                  <el-button type="primary" size="small" :loading="emailSaving" @click="saveEmail">保存</el-button>
+                  <el-button size="small" @click="cancelEditEmail">取消</el-button>
+                </template>
+              </el-descriptions-item>
               <el-descriptions-item label="角色">{{ userStore.roleName }}</el-descriptions-item>
               <el-descriptions-item label="权限">
                 <template v-if="userStore.hasAdminAccess">
@@ -163,7 +181,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { changePassword } from '@/api/auth'
+import { changePassword, updateUserInfo } from '@/api/auth'
 import { getUserCollections } from '@/api/news'
 import { getUserComments } from '@/api/comment'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -172,6 +190,55 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const activeTab = ref('account')
+
+// 邮箱编辑相关
+const userEmail = ref('')
+const isEditingEmail = ref(false)
+const emailSaving = ref(false)
+const editEmailForm = ref({ email: '' })
+
+// 获取用户邮箱
+const fetchUserEmail = async () => {
+  try {
+    const { getUserInfo } = await import('@/api/auth')
+    const res = await getUserInfo()
+    if (res.data?.email) {
+      userEmail.value = res.data.email
+    }
+  } catch (error) {
+    console.error('获取用户信息失败', error)
+  }
+}
+
+// 开始编辑邮箱
+const startEditEmail = () => {
+  editEmailForm.value.email = userEmail.value || ''
+  isEditingEmail.value = true
+}
+
+// 取消编辑
+const cancelEditEmail = () => {
+  isEditingEmail.value = false
+  editEmailForm.value.email = ''
+}
+
+// 保存邮箱
+const saveEmail = async () => {
+  emailSaving.value = true
+  try {
+    await updateUserInfo({ email: editEmailForm.value.email })
+    userEmail.value = editEmailForm.value.email
+    isEditingEmail.value = false
+    ElMessage.success('邮箱更新成功')
+  } catch (error) {
+    ElMessage.error(error.message || '更新失败')
+  } finally {
+    emailSaving.value = false
+  }
+}
+
+// 初始化获取邮箱
+fetchUserEmail()
 
 // 密码相关
 const passwordFormRef = ref(null)
@@ -240,8 +307,8 @@ const fetchCollections = async () => {
   collectionsLoading.value = true
   try {
     const res = await getUserCollections({
-      page: collectionsPage.value,
-      size: collectionsPageSize.value
+      pageNum: collectionsPage.value,
+      pageSize: collectionsPageSize.value
     })
     collections.value = res.data?.records || []
     collectionsTotal.value = res.data?.total || 0

@@ -1,6 +1,7 @@
 package com.news.controller;
 
 import com.news.common.Result;
+import com.news.dto.UserUpdateDTO;
 import com.news.entity.User;
 import com.news.service.UserService;
 import com.news.vo.UserVO;
@@ -63,17 +64,33 @@ public class UserController {
      */
     @PutMapping("/update")
     public Result<UserVO> updateUser(HttpServletRequest request,
-                                      @RequestBody User updateUser) {
+                                      @RequestBody UserUpdateDTO dto) {
         Long userId = (Long) request.getAttribute("userId");
-
-        // 只能修改自己的信息（除非是管理员）
-        Integer role = (Integer) request.getAttribute("role");
-        if (!userId.equals(updateUser.getId()) && role != User.ROLE_ADMIN) {
-            return Result.forbidden();
+        if (userId == null) {
+            return Result.unauthorized();
         }
 
-        // TODO: 实现更新逻辑
-        return Result.success();
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        // 更新邮箱
+        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty()) {
+            // 验证邮箱格式
+            if (!dto.getEmail().matches("^[\\w-]+(\\.[\\w-]+)*@[\\w-]+(\\.[\\w-]+)+$")) {
+                return Result.error("邮箱格式不正确");
+            }
+            user.setEmail(dto.getEmail().trim());
+        }
+
+        // 更新头像
+        if (dto.getAvatar() != null) {
+            user.setAvatar(dto.getAvatar().trim());
+        }
+
+        userService.updateById(user);
+        return Result.success("更新成功", UserVO.fromUser(user));
     }
 
     /**
