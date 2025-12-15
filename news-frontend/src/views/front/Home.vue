@@ -162,9 +162,13 @@ const activeHotTab = ref('weibo')
 const hotSearchList = ref([])
 const hotLoading = ref(false)
 
-const fetchNews = async () => {
+const fetchNews = async (pageNum) => {
+  // 如果传入了页码参数，则使用传入的值
+  if (pageNum) {
+    page.value = pageNum
+  }
   try {
-    const res = await getPublicNewsList({ page: page.value, size: pageSize.value })
+    const res = await getPublicNewsList({ pageNum: page.value, pageSize: pageSize.value })
     newsList.value = res.data?.list || []
     total.value = res.data?.total || 0
 
@@ -179,7 +183,7 @@ const fetchNews = async () => {
 
 const fetchHotNews = async () => {
   try {
-    const res = await getPublicNewsList({ page: 1, size: 10, sort: 'viewCount' })
+    const res = await getPublicNewsList({ pageNum: 1, pageSize: 10, sort: 'viewCount' })
     hotNews.value = res.data?.list || []
   } catch (error) {
     console.error('获取热门新闻失败', error)
