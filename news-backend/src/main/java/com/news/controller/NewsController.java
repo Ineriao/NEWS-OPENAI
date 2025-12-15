@@ -62,12 +62,16 @@ public class NewsController {
     public Result<PageVO<NewsListVO>> searchNews(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize) {
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder) {
         NewsQueryDTO query = new NewsQueryDTO();
         query.setKeyword(keyword);
         query.setStatus(News.STATUS_PUBLISHED);
         query.setPageNum(pageNum);
         query.setPageSize(pageSize);
+        query.setSortBy(sortBy);
+        query.setSortOrder(sortOrder);
         PageVO<NewsListVO> page = newsService.getPage(query);
         return Result.success(page);
     }

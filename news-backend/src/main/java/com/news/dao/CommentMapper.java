@@ -1,6 +1,8 @@
 package com.news.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.news.entity.Comment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -43,4 +45,25 @@ public interface CommentMapper extends BaseMapper<Comment> {
      */
     @Select("SELECT COUNT(*) FROM comment WHERE news_id = #{newsId} AND status = 1")
     Long countByNewsId(@Param("newsId") Long newsId);
+
+    /**
+     * 一次性查询新闻的所有评论（优化N+1问题）
+     * 包含一级评论和回复，带用户信息
+     */
+    @Select("SELECT c.*, u.username, u.avatar as user_avatar " +
+            "FROM comment c " +
+            "LEFT JOIN user u ON c.user_id = u.id " +
+            "WHERE c.news_id = #{newsId} AND c.status = 1 " +
+            "ORDER BY CASE WHEN c.parent_id IS NULL THEN 0 ELSE 1 END, c.create_time ASC")
+    List<Comment> selectAllByNewsId(@Param("newsId") Long newsId);
+
+    /**
+     * 分页查询用户的评论历史（带新闻标题）
+     */
+    @Select("SELECT c.id, c.news_id, c.content, c.create_time, n.title as news_title " +
+            "FROM comment c " +
+            "LEFT JOIN news n ON c.news_id = n.id " +
+            "WHERE c.user_id = #{userId} AND c.status = 1 " +
+            "ORDER BY c.create_time DESC")
+    IPage<Comment> selectUserComments(Page<?> page, @Param("userId") Long userId);
 }

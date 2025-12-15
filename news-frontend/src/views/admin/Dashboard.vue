@@ -1,8 +1,9 @@
 <template>
   <div class="dashboard">
+    <!-- 统计卡片 -->
     <el-row :gutter="20">
       <el-col :span="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card" v-loading="statsLoading">
           <div class="stat-content">
             <div class="stat-icon" style="background: #409eff;">
               <el-icon><Document /></el-icon>
@@ -15,7 +16,7 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card" v-loading="statsLoading">
           <div class="stat-content">
             <div class="stat-icon" style="background: #67c23a;">
               <el-icon><User /></el-icon>
@@ -28,7 +29,7 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card" v-loading="statsLoading">
           <div class="stat-content">
             <div class="stat-icon" style="background: #e6a23c;">
               <el-icon><ChatLineRound /></el-icon>
@@ -41,7 +42,7 @@
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card" v-loading="statsLoading">
           <div class="stat-content">
             <div class="stat-icon" style="background: #f56c6c;">
               <el-icon><Bell /></el-icon>
@@ -55,6 +56,27 @@
       </el-col>
     </el-row>
 
+    <!-- 图表区域 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :span="12">
+        <el-card>
+          <template #header>
+            <span>分类分布</span>
+          </template>
+          <div ref="pieChartRef" class="chart-container"></div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <template #header>
+            <span>近7天发布趋势</span>
+          </template>
+          <div ref="lineChartRef" class="chart-container"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 最近新闻和快捷操作 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="16">
         <el-card>
@@ -92,12 +114,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { getPublicNewsList } from '@/api/news'
+import { getDashboardStats, getCategoryStats, getTrendStats } from '@/api/stats'
+import * as echarts from 'echarts'
 
 const userStore = useUserStore()
 
+const statsLoading = ref(false)
 const stats = ref({
   newsCount: 0,
   userCount: 0,
@@ -107,9 +132,150 @@ const stats = ref({
 
 const recentNews = ref([])
 
+// 图表引用
+const pieChartRef = ref(null)
+const lineChartRef = ref(null)
+let pieChart = null
+let lineChart = null
+
+// 获取统计数据
+const fetchStats = async () => {
+  statsLoading.value = true
+  try {
+    const res = await getDashboardStats()
+    if (res.data) {
+      stats.value = res.data
+    }
+  } catch (error) {
+    console.error('获取统计数据失败', error)
+  } finally {
+    statsLoading.value = false
+  }
+}
+
+// 获取分类统计并渲染饼图
+const fetchCategoryStats = async () => {
+  try {
+    const res = await getCategoryStats()
+    if (res.data) {
+      renderPieChart(res.data)
+    }
+  } catch (error) {
+    console.error('获取分类统计失败', error)
+  }
+}
+
+// 获取趋势统计并渲染折线图
+const fetchTrendStats = async () => {
+  try {
+    const res = await getTrendStats()
+    if (res.data) {
+      renderLineChart(res.data)
+    }
+  } catch (error) {
+    console.error('获取趋势统计失败', error)
+  }
+}
+
+// 渲染饼图
+const renderPieChart = (data) => {
+  if (!pieChartRef.value) return
+
+  pieChart = echarts.init(pieChartRef.value)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center'
+    },
+    series: [
+      {
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 6,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        },
+        data: data.map(item => ({
+          name: item.name,
+          value: item.count
+        }))
+      }
+    ],
+    color: ['#6C5DAB', '#A795BF', '#409eff', '#67c23a', '#e6a23c', '#f56c6c']
+  }
+  pieChart.setOption(option)
+}
+
+// 渲染折线图
+const renderLineChart = (data) => {
+  if (!lineChartRef.value) return
+
+  lineChart = echarts.init(lineChartRef.value)
+  const option = {
+    tooltip: {
+      trigger: 'axis'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: data.map(item => item.date.slice(5)) // 只显示月-日
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1
+    },
+    series: [
+      {
+        name: '发布数量',
+        type: 'line',
+        smooth: true,
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(108, 93, 171, 0.5)' },
+            { offset: 1, color: 'rgba(108, 93, 171, 0.05)' }
+          ])
+        },
+        lineStyle: {
+          color: '#6C5DAB',
+          width: 2
+        },
+        itemStyle: {
+          color: '#6C5DAB'
+        },
+        data: data.map(item => item.count)
+      }
+    ]
+  }
+  lineChart.setOption(option)
+}
+
 const fetchRecentNews = async () => {
   try {
-    const res = await getPublicNewsList({ page: 1, size: 5 })
+    const res = await getPublicNewsList({ pageNum: 1, pageSize: 5 })
     recentNews.value = res.data?.list || []
   } catch (error) {
     console.error('获取新闻失败', error)
@@ -121,8 +287,27 @@ const formatTime = (time) => {
   return new Date(time).toLocaleString('zh-CN')
 }
 
-onMounted(() => {
+// 窗口大小变化时重新调整图表
+const handleResize = () => {
+  pieChart?.resize()
+  lineChart?.resize()
+}
+
+onMounted(async () => {
+  fetchStats()
   fetchRecentNews()
+
+  await nextTick()
+  fetchCategoryStats()
+  fetchTrendStats()
+
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  pieChart?.dispose()
+  lineChart?.dispose()
 })
 </script>
 
@@ -157,6 +342,11 @@ onMounted(() => {
 .stat-label {
   font-size: 14px;
   color: #999;
+}
+
+.chart-container {
+  width: 100%;
+  height: 280px;
 }
 
 .quick-actions {

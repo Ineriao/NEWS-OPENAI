@@ -5,6 +5,8 @@ import com.news.dto.CommentDTO;
 import com.news.entity.Comment;
 import com.news.service.CommentService;
 import com.news.vo.CommentVO;
+import com.news.vo.PageVO;
+import com.news.vo.UserCommentVO;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -85,5 +87,23 @@ public class CommentController {
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /**
+     * 获取用户的评论历史（分页）
+     * GET /api/user/comments
+     */
+    @GetMapping("/user/comments")
+    public Result<PageVO<UserCommentVO>> getUserComments(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return Result.unauthorized();
+        }
+
+        PageVO<UserCommentVO> result = commentService.getUserComments(userId, pageNum, pageSize);
+        return Result.success(result);
     }
 }

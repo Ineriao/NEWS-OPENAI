@@ -25,4 +25,10 @@ public class NewsQueryDTO {
 
     /** 每页条数（默认10） */
     private Integer pageSize = 10;
+
+    /** 排序字段（publishTime, viewCount） */
+    private String sortBy;
+
+    /** 排序方向（asc, desc，默认desc） */
+    private String sortOrder = "desc";
 }

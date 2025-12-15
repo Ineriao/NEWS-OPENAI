@@ -43,7 +43,9 @@ public class NewsServiceImpl implements NewsService {
                 query.getStatus(),
                 query.getCategoryId(),
                 query.getAuthorId(),
-                query.getKeyword()
+                query.getKeyword(),
+                query.getSortBy(),
+                query.getSortOrder()
         );
 
         List<NewsListVO> voList = result.getRecords().stream()

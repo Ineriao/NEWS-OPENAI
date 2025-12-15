@@ -3,6 +3,8 @@ package com.news.service;
 import com.news.dto.CommentDTO;
 import com.news.entity.Comment;
 import com.news.vo.CommentVO;
+import com.news.vo.PageVO;
+import com.news.vo.UserCommentVO;
 
 import java.util.List;
 
@@ -35,4 +37,12 @@ public interface CommentService {
      * 统计新闻的评论数
      */
     Long countByNewsId(Long newsId);
+
+    /**
+     * 获取用户的评论历史（分页）
+     * @param userId 用户ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     */
+    PageVO<UserCommentVO> getUserComments(Long userId, int pageNum, int pageSize);
 }

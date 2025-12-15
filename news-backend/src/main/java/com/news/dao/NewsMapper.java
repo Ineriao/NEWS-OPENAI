@@ -9,6 +9,9 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 新闻数据访问层
  */
@@ -36,13 +39,21 @@ public interface NewsMapper extends BaseMapper<News> {
             "    AND (n.title LIKE CONCAT('%',#{keyword},'%') OR n.summary LIKE CONCAT('%',#{keyword},'%'))" +
             "  </if>" +
             "</where>" +
-            "ORDER BY n.create_time DESC" +
+            "<choose>" +
+            "  <when test='sortBy == \"viewCount\"'>ORDER BY n.view_count</when>" +
+            "  <when test='sortBy == \"publishTime\"'>ORDER BY n.publish_time</when>" +
+            "  <otherwise>ORDER BY n.create_time</otherwise>" +
+            "</choose>" +
+            "<if test='sortOrder == \"asc\"'> ASC</if>" +
+            "<if test='sortOrder != \"asc\"'> DESC</if>" +
             "</script>")
     IPage<News> selectPageWithDetails(Page<News> page,
                                        @Param("status") Integer status,
                                        @Param("categoryId") Long categoryId,
                                        @Param("authorId") Long authorId,
-                                       @Param("keyword") String keyword);
+                                       @Param("keyword") String keyword,
+                                       @Param("sortBy") String sortBy,
+                                       @Param("sortOrder") String sortOrder);
 
     /**
      * 根据ID查询新闻详情（带关联信息）
@@ -87,4 +98,24 @@ public interface NewsMapper extends BaseMapper<News> {
      */
     @Update("UPDATE news SET collection_count = GREATEST(collection_count - 1, 0) WHERE id = #{id}")
     void decrementCollectionCount(@Param("id") Long id);
+
+    /**
+     * 统计各分类的新闻数量
+     */
+    @Select("SELECT c.name as name, COUNT(n.id) as count " +
+            "FROM category c " +
+            "LEFT JOIN news n ON c.id = n.category_id AND n.status = 2 " +
+            "GROUP BY c.id, c.name " +
+            "ORDER BY count DESC")
+    List<Map<String, Object>> countByCategory();
+
+    /**
+     * 统计近7天每天发布的新闻数量
+     */
+    @Select("SELECT DATE(publish_time) as date, COUNT(*) as count " +
+            "FROM news " +
+            "WHERE status = 2 AND publish_time >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) " +
+            "GROUP BY DATE(publish_time) " +
+            "ORDER BY date ASC")
+    List<Map<String, Object>> countByDay();
 }

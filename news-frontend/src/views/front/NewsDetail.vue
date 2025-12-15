@@ -40,14 +40,19 @@
 
         <!-- 发表评论 -->
         <div class="comment-form" v-if="userStore.isLoggedIn">
+          <!-- 回复提示条 -->
+          <div v-if="replyTo" class="reply-hint">
+            <span>回复 @{{ replyTo.username }}</span>
+            <el-button type="primary" link size="small" @click="cancelReply">取消</el-button>
+          </div>
           <el-input
             v-model="commentContent"
             type="textarea"
             :rows="3"
-            placeholder="发表你的评论..."
+            :placeholder="replyTo ? `回复 @${replyTo.username}...` : '发表你的评论...'"
           />
           <el-button type="primary" :loading="submitting" @click="submitComment">
-            发表评论
+            {{ replyTo ? '回复' : '发表评论' }}
           </el-button>
         </div>
         <div class="login-tip" v-else>
@@ -76,6 +81,15 @@
               >
                 回复
               </el-button>
+              <el-button
+                v-if="canDeleteComment(comment)"
+                type="danger"
+                link
+                size="small"
+                @click="handleDeleteComment(comment.id)"
+              >
+                删除
+              </el-button>
             </div>
 
             <!-- 回复列表 -->
@@ -102,8 +116,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getNewsDetail, toggleLike, getLikeStatus, toggleCollection, getCollectionStatus } from '@/api/news'
-import { getComments, createComment } from '@/api/comment'
-import { ElMessage } from 'element-plus'
+import { getComments, createComment, deleteComment } from '@/api/comment'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -211,7 +225,7 @@ const submitComment = async () => {
       content: commentContent.value,
       parentId: replyTo.value?.id
     })
-    ElMessage.success('评论成功')
+    ElMessage.success(replyTo.value ? '回复成功' : '评论成功')
     commentContent.value = ''
     replyTo.value = null
     fetchComments()
@@ -220,6 +234,37 @@ const submitComment = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// 取消回复
+const cancelReply = () => {
+  replyTo.value = null
+}
+
+// 删除评论
+const handleDeleteComment = async (commentId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await deleteComment(commentId)
+    ElMessage.success('删除成功')
+    fetchComments()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除评论失败', error)
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 判断是否可以删除评论
+const canDeleteComment = (comment) => {
+  if (!userStore.isLoggedIn) return false
+  // 作者或管理员可以删除
+  return comment.userId === userStore.userId || userStore.role >= 4
 }
 
 const formatTime = (time) => {
@@ -348,6 +393,18 @@ onMounted(() => {
 .comment-form .el-button {
   background: linear-gradient(135deg, #A795BF, #6C5DAB);
   border: none;
+}
+
+.reply-hint {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(108, 93, 171, 0.1);
+  border-radius: 6px;
+  color: #6C5DAB;
+  font-size: 14px;
 }
 
 .login-tip {

@@ -1,5 +1,7 @@
 package com.news.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.news.dao.CommentMapper;
 import com.news.dao.NewsMapper;
 import com.news.dto.CommentDTO;
@@ -8,11 +10,16 @@ import com.news.entity.News;
 import com.news.entity.User;
 import com.news.service.CommentService;
 import com.news.vo.CommentVO;
+import com.news.vo.PageVO;
+import com.news.vo.UserCommentVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -29,16 +36,41 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentVO> getCommentsByNewsId(Long newsId) {
-        // 1. 获取一级评论
-        List<Comment> topComments = commentMapper.selectTopCommentsByNewsId(newsId);
+        // 一次性获取所有评论（优化N+1查询）
+        List<Comment> allComments = commentMapper.selectAllByNewsId(newsId);
 
-        // 2. 为每个一级评论获取回复
-        for (Comment comment : topComments) {
-            List<Comment> replies = commentMapper.selectRepliesByParentId(comment.getId());
-            comment.setReplies(replies);
+        if (allComments.isEmpty()) {
+            return new ArrayList<>();
         }
 
-        // 3. 转换为 VO
+        // 构建评论ID -> 评论的映射
+        Map<Long, Comment> commentMap = new HashMap<>();
+        for (Comment c : allComments) {
+            commentMap.put(c.getId(), c);
+        }
+
+        // 分离一级评论和回复，构建树形结构
+        List<Comment> topComments = new ArrayList<>();
+        for (Comment c : allComments) {
+            if (c.getParentId() == null) {
+                // 一级评论
+                c.setReplies(new ArrayList<>());
+                topComments.add(c);
+            } else {
+                // 回复：找到父评论并添加到其回复列表
+                Comment parent = commentMap.get(c.getParentId());
+                if (parent != null) {
+                    // 设置被回复人用户名
+                    c.setReplyToUsername(parent.getUsername());
+                    if (parent.getReplies() == null) {
+                        parent.setReplies(new ArrayList<>());
+                    }
+                    parent.getReplies().add(c);
+                }
+            }
+        }
+
+        // 转换为 VO
         return topComments.stream()
                 .map(CommentVO::fromComment)
                 .collect(Collectors.toList());
@@ -112,5 +144,18 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Long countByNewsId(Long newsId) {
         return commentMapper.countByNewsId(newsId);
+    }
+
+    @Override
+    public PageVO<UserCommentVO> getUserComments(Long userId, int pageNum, int pageSize) {
+        Page<Comment> page = new Page<>(pageNum, pageSize);
+        IPage<Comment> result = commentMapper.selectUserComments(page, userId);
+
+        List<UserCommentVO> voList = result.getRecords().stream()
+                .map(UserCommentVO::fromComment)
+                .collect(Collectors.toList());
+
+        return PageVO.of(voList, result.getTotal(), result.getPages(),
+                result.getCurrent(), result.getSize());
     }
 }

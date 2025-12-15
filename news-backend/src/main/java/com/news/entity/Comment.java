@@ -61,4 +61,8 @@ public class Comment {
     /** 被回复的用户名 (如果是回复评论) */
     @TableField(exist = false)
     private String replyToUsername;
+
+    /** 新闻标题 (用于用户评论历史) */
+    @TableField(exist = false)
+    private String newsTitle;
 }

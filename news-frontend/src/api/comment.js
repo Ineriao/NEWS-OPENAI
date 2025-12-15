@@ -23,3 +23,8 @@ export function createComment(data) {
 export function deleteComment(id) {
   return request.delete(`/comments/${id}`)
 }
+
+// 获取用户的评论历史
+export function getUserComments(params) {
+  return request.get('/user/comments', { params })
+}
