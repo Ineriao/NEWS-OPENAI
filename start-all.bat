@@ -22,7 +22,10 @@ timeout /t 2 /nobreak > nul
 REM 3. Start Spring Boot Backend
 echo [3/5] Starting Spring Boot Backend...
 cd /d "%~dp0news-backend"
-start "Spring Boot" cmd /c "call run.bat"
+set JAVA_HOME=D:\jdk17
+set PATH=%JAVA_HOME%\bin;%PATH%
+set UPLOAD_PATH=D:/Learn/WEBdesign/uploads/
+start "Spring Boot" cmd /c "D:\maven\apache-maven-3.9.11\bin\mvn spring-boot:run"
 echo Backend starting on port 8080...
 timeout /t 3 /nobreak > nul
 

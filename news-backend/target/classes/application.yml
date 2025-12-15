@@ -4,14 +4,15 @@
 
 server:
   port: 8080
+  address: 0.0.0.0  # 允许局域网访问
 
 spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/news_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: 123456
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid 连接池配置
     druid:
@@ -27,6 +28,30 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Redis 缓存配置
+  redis:
+    host: localhost
+    port: 6379
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  # Elasticsearch 配置
+  elasticsearch:
+    uris: http://localhost:9200
+
 # MyBatis-Plus 配置
 mybatis-plus:
   type-aliases-package: com.news.entity
@@ -40,21 +65,29 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: YourSuperSecretKeyForJWTTokenGenerationMustBeLongEnough123456
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
 # 文件上传配置
 upload:
-  path: D:/uploads/news/
+  path: ${UPLOAD_PATH}
   max-size: 10485760
 
 # AI 配置 - OpenAI 兼容格式 (支持 Kimi/DeepSeek/OpenAI)
 ai:
-  api-key: sk-4UoxH7zTXKt8CDNlAO6bb9Y9UKi7kFoTBiENxspB7A2CZZq0
-  base-url: ${AI_BASE_URL:https://api.moonshot.cn/v1}
-  model: ${AI_MODEL:moonshot-v1-8k}
+  api-key: ${AI_API_KEY}
+  base-url: ${AI_BASE_URL}
+  model: ${AI_MODEL}
 
 # 日志配置
 logging:
   level:
     com.news: debug
+
+# 定时任务配置
+scheduler:
+  enabled: true                           # 是否启用定时任务
+  hot-search:
+    cron: "0 0/30 * * * ?"               # 热搜刷新：每30分钟
+  external-news:
+    cron: "0 0 * * * ?"                  # 外部新闻刷新：每小时整点
