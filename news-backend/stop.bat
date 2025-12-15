@@ -20,6 +20,22 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :6688 ^| findstr LISTENING') 
     echo DailyHotApi stopped
 )
 
+REM Stop Elasticsearch (port 9200)
+echo Checking port 9200 (Elasticsearch)...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :9200 ^| findstr LISTENING') do (
+    echo Found Elasticsearch PID: %%a
+    taskkill /PID %%a /F
+    echo Elasticsearch stopped
+)
+
+REM Stop Redis (port 6379)
+echo Checking port 6379 (Redis)...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :6379 ^| findstr LISTENING') do (
+    echo Found Redis PID: %%a
+    taskkill /PID %%a /F
+    echo Redis stopped
+)
+
 echo.
 echo All services stopped.
 pause
