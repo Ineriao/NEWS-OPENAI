@@ -13,6 +13,9 @@ REM Start Spring Boot backend
 set JAVA_HOME=D:\jdk17
 set PATH=%JAVA_HOME%\bin;%PATH%
 
+REM Set upload path
+set UPLOAD_PATH=D:/Learn/WEBdesign/uploads/
+
 echo Using Java: %JAVA_HOME%
 java -version
 

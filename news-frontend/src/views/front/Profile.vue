@@ -2,9 +2,22 @@
   <div class="profile-page">
     <div class="profile-header">
       <div class="avatar-section">
-        <el-avatar :size="100" class="user-avatar">
-          {{ userStore.username.charAt(0).toUpperCase() }}
-        </el-avatar>
+        <el-upload
+          class="avatar-uploader"
+          :action="uploadUrl"
+          :headers="uploadHeaders"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+          accept="image/*"
+        >
+          <el-avatar :size="100" :src="avatarUrl" class="user-avatar">
+            {{ userStore.username.charAt(0).toUpperCase() }}
+          </el-avatar>
+          <div class="avatar-overlay">
+            <el-icon><Camera /></el-icon>
+          </div>
+        </el-upload>
         <div class="user-meta">
           <h1 class="username">{{ userStore.username }}</h1>
           <el-tag :type="roleTagType" class="role-tag">{{ userStore.roleName }}</el-tag>
@@ -185,11 +198,58 @@ import { changePassword, updateUserInfo } from '@/api/auth'
 import { getUserCollections } from '@/api/news'
 import { getUserComments } from '@/api/comment'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Camera, Clock, View, Setting, SwitchButton } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 const activeTab = ref('account')
+
+// 头像上传相关
+const uploadUrl = import.meta.env.VITE_API_BASE_URL + '/files/upload'
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+})
+const userAvatar = ref('')
+
+// 计算头像 URL
+const avatarUrl = computed(() => {
+  if (!userAvatar.value) return ''
+  if (userAvatar.value.startsWith('http')) return userAvatar.value
+  return import.meta.env.VITE_API_BASE_URL.replace('/api', '') + userAvatar.value
+})
+
+// 头像上传成功
+const handleAvatarSuccess = async (response) => {
+  if (response.code === 200) {
+    try {
+      await updateUserInfo({ avatar: response.data.url })
+      userAvatar.value = response.data.url
+      ElMessage.success('头像更新成功')
+    } catch (error) {
+      ElMessage.error('头像保存失败')
+    }
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+// 头像上传前验证
+const beforeAvatarUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('头像大小不能超过 2MB')
+    return false
+  }
+  return true
+}
 
 // 邮箱编辑相关
 const userEmail = ref('')
@@ -197,13 +257,16 @@ const isEditingEmail = ref(false)
 const emailSaving = ref(false)
 const editEmailForm = ref({ email: '' })
 
-// 获取用户邮箱
-const fetchUserEmail = async () => {
+// 获取用户邮箱和头像
+const fetchUserInfo = async () => {
   try {
     const { getUserInfo } = await import('@/api/auth')
     const res = await getUserInfo()
     if (res.data?.email) {
       userEmail.value = res.data.email
+    }
+    if (res.data?.avatar) {
+      userAvatar.value = res.data.avatar
     }
   } catch (error) {
     console.error('获取用户信息失败', error)
@@ -237,8 +300,8 @@ const saveEmail = async () => {
   }
 }
 
-// 初始化获取邮箱
-fetchUserEmail()
+// 初始化获取用户信息
+fetchUserInfo()
 
 // 密码相关
 const passwordFormRef = ref(null)
@@ -401,6 +464,41 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.avatar-uploader {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-uploader :deep(.el-upload) {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 100px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.avatar-uploader:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay .el-icon {
+  font-size: 24px;
+  color: #fff;
 }
 
 .user-avatar {
