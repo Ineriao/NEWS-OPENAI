@@ -101,6 +101,16 @@
             <div class="comment-content" v-html="renderContent(comment.content)"></div>
             <div class="comment-actions">
               <el-button
+                :type="comment.liked ? 'primary' : 'default'"
+                link
+                size="small"
+                :class="{ 'is-liked': comment.liked }"
+                @click="handleCommentLike(comment)"
+              >
+                <el-icon><Pointer /></el-icon>
+                {{ comment.likeCount || 0 }}
+              </el-button>
+              <el-button
                 type="primary"
                 link
                 size="small"
@@ -122,11 +132,25 @@
             <!-- 回复列表 -->
             <div v-if="comment.replies?.length" class="replies">
               <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-                <span class="username">{{ reply.username }}</span>
-                <span v-if="reply.replyToUsername" class="reply-to">
-                  回复 <span class="reply-username">@{{ reply.replyToUsername }}</span>
-                </span>
-                <span class="content" v-html="': ' + renderContent(reply.content)"></span>
+                <div class="reply-main">
+                  <span class="username">{{ reply.username }}</span>
+                  <span v-if="reply.replyToUsername" class="reply-to">
+                    回复 <span class="reply-username">@{{ reply.replyToUsername }}</span>
+                  </span>
+                  <span class="content" v-html="': ' + renderContent(reply.content)"></span>
+                </div>
+                <div class="reply-actions">
+                  <el-button
+                    :type="reply.liked ? 'primary' : 'default'"
+                    link
+                    size="small"
+                    :class="{ 'is-liked': reply.liked }"
+                    @click="handleCommentLike(reply)"
+                  >
+                    <el-icon><Pointer /></el-icon>
+                    {{ reply.likeCount || 0 }}
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -143,7 +167,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getNewsDetail, toggleLike, getLikeStatus, toggleCollection, getCollectionStatus } from '@/api/news'
-import { getComments, createComment, deleteComment } from '@/api/comment'
+import { getComments, createComment, deleteComment, toggleCommentLike } from '@/api/comment'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
@@ -326,6 +350,23 @@ const canDeleteComment = (comment) => {
   if (!userStore.isLoggedIn) return false
   // 作者或管理员可以删除
   return comment.userId === userStore.userId || userStore.role >= 4
+}
+
+// 评论点赞/取消点赞
+const handleCommentLike = async (comment) => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  try {
+    const res = await toggleCommentLike(comment.id)
+    // 更新本地状态
+    comment.liked = res.data
+    comment.likeCount = (comment.likeCount || 0) + (res.data ? 1 : -1)
+  } catch (error) {
+    console.error('点赞操作失败', error)
+    ElMessage.error('操作失败')
+  }
 }
 
 const formatTime = (time) => {
@@ -617,5 +658,38 @@ onMounted(() => {
 .comment-content :deep(.comment-link):hover,
 .reply-item .content :deep(.comment-link):hover {
   text-decoration: underline;
+}
+
+/* 评论点赞按钮 */
+.comment-actions .el-button.is-liked {
+  color: #6C5DAB !important;
+}
+
+.comment-actions .el-button .el-icon {
+  margin-right: 4px;
+}
+
+/* 回复布局 */
+.reply-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.reply-main {
+  flex: 1;
+}
+
+.reply-actions {
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.reply-actions .el-button.is-liked {
+  color: #6C5DAB !important;
+}
+
+.reply-actions .el-button .el-icon {
+  margin-right: 4px;
 }
 </style>

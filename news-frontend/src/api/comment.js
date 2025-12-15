@@ -24,6 +24,11 @@ export function deleteComment(id) {
   return request.delete(`/comments/${id}`)
 }
 
+// 点赞/取消点赞评论
+export function toggleCommentLike(id) {
+  return request.post(`/comments/${id}/like`)
+}
+
 // 获取用户的评论历史
 export function getUserComments(params) {
   return request.get('/user/comments', { params })

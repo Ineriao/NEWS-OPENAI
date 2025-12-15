@@ -39,6 +39,9 @@ public class Comment {
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
+    /** 点赞数 */
+    private Integer likeCount;
+
     // ==================== 状态常量 ====================
 
     public static final int STATUS_HIDDEN = 0;    // 隐藏

@@ -20,6 +20,12 @@ public class CommentVO {
     private String content;
     private LocalDateTime createTime;
 
+    /** 点赞数 */
+    private Integer likeCount;
+
+    /** 当前用户是否已点赞 */
+    private Boolean liked;
+
     /** 回复列表 */
     private List<ReplyVO> replies;
 
@@ -37,6 +43,8 @@ public class CommentVO {
         vo.setUserAvatar(comment.getUserAvatar());
         vo.setContent(comment.getContent());
         vo.setCreateTime(comment.getCreateTime());
+        vo.setLikeCount(comment.getLikeCount() != null ? comment.getLikeCount() : 0);
+        vo.setLiked(false);  // 默认未点赞，需要在 Service 层设置
 
         // 转换回复
         if (comment.getReplies() != null) {
@@ -60,6 +68,8 @@ public class CommentVO {
         private String content;
         private String replyToUsername;  // 回复的目标用户名
         private LocalDateTime createTime;
+        private Integer likeCount;
+        private Boolean liked;
 
         public static ReplyVO fromComment(Comment comment) {
             if (comment == null) return null;
@@ -72,6 +82,8 @@ public class CommentVO {
             vo.setContent(comment.getContent());
             vo.setReplyToUsername(comment.getReplyToUsername());
             vo.setCreateTime(comment.getCreateTime());
+            vo.setLikeCount(comment.getLikeCount() != null ? comment.getLikeCount() : 0);
+            vo.setLiked(false);  // 默认未点赞，需要在 Service 层设置
             return vo;
         }
     }

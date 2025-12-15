@@ -1,11 +1,14 @@
 package com.news.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.news.dao.CommentLikeMapper;
 import com.news.dao.CommentMapper;
 import com.news.dao.NewsMapper;
 import com.news.dto.CommentDTO;
 import com.news.entity.Comment;
+import com.news.entity.CommentLike;
 import com.news.entity.News;
 import com.news.entity.User;
 import com.news.service.CommentService;
@@ -16,10 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,13 +35,32 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private NewsMapper newsMapper;
 
+    @Autowired
+    private CommentLikeMapper commentLikeMapper;
+
     @Override
-    public List<CommentVO> getCommentsByNewsId(Long newsId) {
+    public List<CommentVO> getCommentsByNewsId(Long newsId, Long currentUserId) {
         // 一次性获取所有评论（优化N+1查询）
         List<Comment> allComments = commentMapper.selectAllByNewsId(newsId);
 
         if (allComments.isEmpty()) {
             return new ArrayList<>();
+        }
+
+        // 获取当前用户点赞的评论ID集合
+        Set<Long> likedCommentIds = new HashSet<>();
+        if (currentUserId != null) {
+            List<Long> commentIds = allComments.stream()
+                    .map(Comment::getId)
+                    .collect(Collectors.toList());
+            // 查询用户点赞的评论
+            LambdaQueryWrapper<CommentLike> likeQuery = new LambdaQueryWrapper<>();
+            likeQuery.eq(CommentLike::getUserId, currentUserId)
+                    .in(CommentLike::getCommentId, commentIds);
+            List<CommentLike> likes = commentLikeMapper.selectList(likeQuery);
+            likedCommentIds = likes.stream()
+                    .map(CommentLike::getCommentId)
+                    .collect(Collectors.toSet());
         }
 
         // 构建评论ID -> 评论的映射
@@ -70,9 +90,20 @@ public class CommentServiceImpl implements CommentService {
             }
         }
 
-        // 转换为 VO
+        // 转换为 VO 并设置点赞状态
+        Set<Long> finalLikedCommentIds = likedCommentIds;
         return topComments.stream()
-                .map(CommentVO::fromComment)
+                .map(comment -> {
+                    CommentVO vo = CommentVO.fromComment(comment);
+                    vo.setLiked(finalLikedCommentIds.contains(comment.getId()));
+                    // 设置回复的点赞状态
+                    if (vo.getReplies() != null) {
+                        for (CommentVO.ReplyVO reply : vo.getReplies()) {
+                            reply.setLiked(finalLikedCommentIds.contains(reply.getId()));
+                        }
+                    }
+                    return vo;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -157,5 +188,46 @@ public class CommentServiceImpl implements CommentService {
 
         return PageVO.of(voList, result.getTotal(), result.getPages(),
                 result.getCurrent(), result.getSize());
+    }
+
+    @Override
+    @Transactional
+    public boolean toggleLike(Long commentId, Long userId) {
+        // 检查评论是否存在
+        Comment comment = commentMapper.selectById(commentId);
+        if (comment == null) {
+            throw new RuntimeException("评论不存在");
+        }
+
+        // 检查是否已点赞
+        LambdaQueryWrapper<CommentLike> query = new LambdaQueryWrapper<>();
+        query.eq(CommentLike::getCommentId, commentId)
+                .eq(CommentLike::getUserId, userId);
+        CommentLike existingLike = commentLikeMapper.selectOne(query);
+
+        if (existingLike != null) {
+            // 已点赞，取消点赞
+            commentLikeMapper.deleteById(existingLike.getId());
+            // 更新评论点赞数
+            comment.setLikeCount(Math.max(0, (comment.getLikeCount() != null ? comment.getLikeCount() : 0) - 1));
+            commentMapper.updateById(comment);
+            return false;
+        } else {
+            // 未点赞，添加点赞
+            CommentLike like = new CommentLike();
+            like.setCommentId(commentId);
+            like.setUserId(userId);
+            like.setCreateTime(LocalDateTime.now());
+            commentLikeMapper.insert(like);
+            // 更新评论点赞数
+            comment.setLikeCount((comment.getLikeCount() != null ? comment.getLikeCount() : 0) + 1);
+            commentMapper.updateById(comment);
+            return true;
+        }
+    }
+
+    @Override
+    public boolean checkLiked(Long commentId, Long userId) {
+        return commentLikeMapper.checkLiked(commentId, userId) > 0;
     }
 }
