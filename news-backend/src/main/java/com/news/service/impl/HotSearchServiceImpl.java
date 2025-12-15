@@ -3,6 +3,7 @@ package com.news.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.news.common.CacheConstants;
 import com.news.dao.HotSearchMapper;
 import com.news.entity.HotSearch;
 import com.news.service.HotSearchService;
@@ -10,6 +11,8 @@ import com.news.vo.HotSearchVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -59,6 +62,7 @@ public class HotSearchServiceImpl implements HotSearchService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_HOT_SEARCH, allEntries = true)
     public void refreshAndSaveAll() {
         saveHotList(getWeiboHot(), "微博");
         saveHotList(getDouyinHot(), "抖音");
@@ -68,6 +72,7 @@ public class HotSearchServiceImpl implements HotSearchService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_HOT_SEARCH, key = "#source")
     public List<HotSearchVO> getFromDb(String source) {
         LambdaQueryWrapper<HotSearch> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(HotSearch::getSource, source)

@@ -3,6 +3,7 @@ package com.news.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.news.common.CacheConstants;
 import com.news.dao.CommentLikeMapper;
 import com.news.dao.CommentMapper;
 import com.news.dao.NewsMapper;
@@ -16,6 +17,8 @@ import com.news.vo.CommentVO;
 import com.news.vo.PageVO;
 import com.news.vo.UserCommentVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,6 +112,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_COMMENT_COUNT, key = "#dto.newsId")
     public Comment createComment(CommentDTO dto, Long userId) {
         // 1. 参数校验
         if (dto.getNewsId() == null) {
@@ -156,6 +160,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_COMMENT_COUNT, allEntries = true)
     public void deleteComment(Long commentId, Long operatorId, Integer operatorRole) {
         Comment comment = commentMapper.selectById(commentId);
         if (comment == null) {
@@ -173,6 +178,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_COMMENT_COUNT, key = "#newsId")
     public Long countByNewsId(Long newsId) {
         return commentMapper.countByNewsId(newsId);
     }

@@ -1,11 +1,14 @@
 package com.news.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.news.common.CacheConstants;
 import com.news.dao.CategoryMapper;
 import com.news.dto.CategoryDTO;
 import com.news.entity.Category;
 import com.news.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private CategoryMapper categoryMapper;
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_CATEGORY, key = "'tree'")
     public List<Category> getTreeList() {
         // 1. 查询所有分类
         List<Category> allCategories = getFlatList();
@@ -87,6 +91,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_CATEGORY, allEntries = true)
     public Category create(CategoryDTO dto) {
         // 1. 参数校验
         if (dto.getName() == null || dto.getName().trim().isEmpty()) {
@@ -117,6 +122,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_CATEGORY, allEntries = true)
     public Category update(Long id, CategoryDTO dto) {
         // 1. 检查分类是否存在
         Category category = categoryMapper.selectById(id);
@@ -159,6 +165,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_CATEGORY, allEntries = true)
     public void delete(Long id) {
         // 1. 检查分类是否存在
         Category category = categoryMapper.selectById(id);

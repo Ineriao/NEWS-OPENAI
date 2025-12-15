@@ -2,6 +2,7 @@ package com.news.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.news.common.CacheConstants;
 import com.news.dao.NewsMapper;
 import com.news.dto.NewsDTO;
 import com.news.dto.NewsQueryDTO;
@@ -13,6 +14,8 @@ import com.news.vo.NewsDetailVO;
 import com.news.vo.NewsListVO;
 import com.news.vo.PageVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +60,7 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CACHE_NEWS, key = "'detail:' + #id")
     public NewsDetailVO getDetail(Long id) {
         News news = newsMapper.selectByIdWithDetails(id);
         return NewsDetailVO.fromNews(news);
@@ -99,6 +103,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
     public News update(Long id, NewsDTO dto, Long operatorId, Integer operatorRole) {
         // 1. 检查新闻是否存在
         News news = newsMapper.selectById(id);
@@ -135,6 +140,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
     public void delete(Long id, Long operatorId, Integer operatorRole) {
         News news = newsMapper.selectById(id);
         if (news == null) {
@@ -178,6 +184,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
     public void approve(Long id, Long reviewerId) {
         News news = newsMapper.selectById(id);
         if (news == null) {
@@ -215,6 +222,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
     public void archive(Long id, Long operatorId, Integer operatorRole) {
         News news = newsMapper.selectById(id);
         if (news == null) {
