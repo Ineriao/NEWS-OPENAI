@@ -1,5 +1,6 @@
 package com.news.controller;
 
+import com.news.common.RateLimit;
 import com.news.common.Result;
 import com.news.dto.AiChatDTO;
 import com.news.service.AiService;
@@ -24,8 +25,10 @@ public class AiController {
     /**
      * AI 对话
      * POST /api/ai/chat
+     * 限制：每用户每分钟最多10次（按用户限制）
      */
     @PostMapping("/chat")
+    @RateLimit(limit = 10, period = 60, type = RateLimit.LimitType.USER)
     public Result<AiChatVO> chat(@RequestBody AiChatDTO dto, HttpServletRequest request) {
         try {
             // 可以从 request 获取用户信息 (如需记录日志)
@@ -42,8 +45,10 @@ public class AiController {
     /**
      * 总结新闻
      * POST /api/ai/summarize
+     * 限制：每用户每分钟最多5次（按用户限制）
      */
     @PostMapping("/summarize")
+    @RateLimit(limit = 5, period = 60, type = RateLimit.LimitType.USER)
     public Result<AiChatVO> summarize(@RequestBody AiChatDTO dto, HttpServletRequest request) {
         try {
             String content = dto.getNewsContent();

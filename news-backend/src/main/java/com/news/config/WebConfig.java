@@ -16,6 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private JwtInterceptor jwtInterceptor;
 
+    @Autowired
+    private RateLimitInterceptor rateLimitInterceptor;
+
     /**
      * 配置跨域
      */
@@ -31,9 +34,16 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * 配置拦截器
+     * 注意：拦截器顺序很重要，速率限制应在认证之前
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 1. 速率限制拦截器（最先执行）
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/error");
+
+        // 2. JWT 认证拦截器
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(

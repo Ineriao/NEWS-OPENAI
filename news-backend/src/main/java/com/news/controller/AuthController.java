@@ -1,5 +1,6 @@
 package com.news.controller;
 
+import com.news.common.RateLimit;
 import com.news.common.Result;
 import com.news.dto.LoginDTO;
 import com.news.dto.RegisterDTO;
@@ -25,8 +26,10 @@ public class AuthController {
     /**
      * 用户注册
      * POST /api/auth/register
+     * 限制：同一IP每分钟最多5次
      */
     @PostMapping("/register")
+    @RateLimit(limit = 5, period = 60)
     public Result<UserVO> register(@RequestBody RegisterDTO dto) {
         try {
             User user = userService.register(dto);
@@ -39,8 +42,10 @@ public class AuthController {
     /**
      * 用户登录
      * POST /api/auth/login
+     * 限制：同一IP每分钟最多10次（防止暴力破解）
      */
     @PostMapping("/login")
+    @RateLimit(limit = 10, period = 60)
     public Result<LoginVO> login(@RequestBody LoginDTO dto) {
         try {
             LoginVO loginVO = userService.login(dto);
@@ -53,8 +58,10 @@ public class AuthController {
     /**
      * 检查用户名是否可用
      * GET /api/auth/check-username?username=xxx
+     * 限制：同一IP每分钟最多30次
      */
     @GetMapping("/check-username")
+    @RateLimit(limit = 30, period = 60)
     public Result<Boolean> checkUsername(@RequestParam String username) {
         boolean exists = userService.existsByUsername(username);
         if (exists) {

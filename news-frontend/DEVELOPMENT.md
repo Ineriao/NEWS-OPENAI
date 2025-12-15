@@ -1,5 +1,149 @@
 # 开发笔记
 
+## 项目结构
+
+### 后端 (news-backend)
+
+```
+src/main/java/com/news/
+├── common/                    # 公共类
+│   ├── Result.java           # 统一响应结果
+│   ├── BusinessException.java # 自定义业务异常
+│   └── RateLimit.java        # 速率限制注解
+├── config/                    # 配置类
+│   ├── WebConfig.java        # Web MVC 配置
+│   ├── JwtInterceptor.java   # JWT 认证拦截器
+│   ├── RateLimitInterceptor.java # 速率限制拦截器
+│   ├── GlobalExceptionHandler.java # 全局异常处理
+│   └── MyBatisPlusConfig.java # MyBatis-Plus 配置
+├── controller/               # 控制器
+├── service/                  # 服务层
+├── dao/                      # 数据访问层
+├── entity/                   # 实体类
+├── dto/                      # 数据传输对象
+├── vo/                       # 视图对象
+└── utils/                    # 工具类
+```
+
+### 前端 (news-frontend)
+
+```
+src/
+├── api/                      # API 接口
+├── components/               # 公共组件
+├── stores/                   # Pinia 状态管理
+├── views/                    # 页面视图
+│   ├── admin/               # 后台管理页面
+│   └── front/               # 前台页面
+└── utils/                    # 工具函数
+```
+
+---
+
+## API 速率限制
+
+### 功能说明
+
+使用 `@RateLimit` 注解实现接口级别的速率限制，防止恶意请求和暴力破解。
+
+### 相关文件
+
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| RateLimit.java | `common/RateLimit.java` | 速率限制注解 |
+| RateLimitInterceptor.java | `config/RateLimitInterceptor.java` | 拦截器实现 |
+| WebConfig.java | `config/WebConfig.java` | 拦截器配置 |
+
+### 使用方法
+
+```java
+// 默认：60秒内最多10次，按IP限制
+@RateLimit
+@GetMapping("/api/example")
+public Result example() { ... }
+
+// 自定义：30秒内最多5次
+@RateLimit(limit = 5, period = 30)
+@PostMapping("/api/example")
+public Result example() { ... }
+
+// 按用户限制（需登录）
+@RateLimit(limit = 10, period = 60, type = RateLimit.LimitType.USER)
+@PostMapping("/api/example")
+public Result example() { ... }
+
+// 全局限制（所有请求共享配额）
+@RateLimit(limit = 100, period = 60, type = RateLimit.LimitType.GLOBAL)
+@GetMapping("/api/example")
+public Result example() { ... }
+```
+
+### 限制类型
+
+| 类型 | 说明 | 适用场景 |
+|------|------|----------|
+| `IP` | 按客户端IP限制 | 登录、注册等公开接口 |
+| `USER` | 按用户ID限制 | 需登录的接口，如AI对话 |
+| `GLOBAL` | 全局限制 | 共享资源接口 |
+
+### 已配置的接口
+
+| 接口 | 限制 | 说明 |
+|------|------|------|
+| `POST /api/auth/login` | 10次/分钟(IP) | 防止暴力破解 |
+| `POST /api/auth/register` | 5次/分钟(IP) | 防止批量注册 |
+| `GET /api/auth/check-username` | 30次/分钟(IP) | 防止用户名枚举 |
+| `POST /api/ai/chat` | 10次/分钟(USER) | 控制AI调用成本 |
+| `POST /api/ai/summarize` | 5次/分钟(USER) | 控制AI调用成本 |
+
+### 超限响应
+
+```json
+{
+  "code": 429,
+  "message": "请求过于频繁，请稍后再试",
+  "data": null
+}
+```
+
+---
+
+## 全局异常处理
+
+### 相关文件
+
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| BusinessException.java | `common/BusinessException.java` | 自定义业务异常 |
+| GlobalExceptionHandler.java | `config/GlobalExceptionHandler.java` | 全局异常处理器 |
+
+### 使用方法
+
+```java
+// 抛出业务异常
+throw new BusinessException("操作失败");
+throw new BusinessException(400, "参数错误");
+
+// 使用工厂方法
+throw BusinessException.badRequest("参数错误");
+throw BusinessException.notFound("用户不存在");
+throw BusinessException.unauthorized("请先登录");
+throw BusinessException.forbidden("权限不足");
+```
+
+### 异常处理映射
+
+| 异常类型 | HTTP状态码 | 说明 |
+|----------|-----------|------|
+| `BusinessException` | 自定义 | 业务逻辑异常 |
+| `MethodArgumentNotValidException` | 400 | @Valid 校验失败 |
+| `MissingServletRequestParameterException` | 400 | 缺少必要参数 |
+| `HttpRequestMethodNotSupportedException` | 405 | 请求方法不支持 |
+| `NoHandlerFoundException` | 404 | 接口不存在 |
+| `Exception` | 500 | 其他未知异常 |
+
+---
+
 ## Vue Scoped CSS 与深色模式
 
 ### 问题描述
