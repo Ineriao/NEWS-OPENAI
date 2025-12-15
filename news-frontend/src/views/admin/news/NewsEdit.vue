@@ -10,7 +10,7 @@
         :model="form"
         :rules="rules"
         label-width="100px"
-        style="max-width: 800px;"
+        style="max-width: 900px;"
       >
         <el-form-item label="新闻标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入新闻标题" />
@@ -36,12 +36,21 @@
         </el-form-item>
 
         <el-form-item label="新闻内容" prop="content">
-          <el-input
-            v-model="form.content"
-            type="textarea"
-            :rows="15"
-            placeholder="请输入新闻内容（支持HTML）"
-          />
+          <div class="editor-container">
+            <Toolbar
+              :editor="editorRef"
+              :defaultConfig="toolbarConfig"
+              mode="default"
+              class="editor-toolbar"
+            />
+            <Editor
+              v-model="form.content"
+              :defaultConfig="editorConfig"
+              mode="default"
+              class="editor-content"
+              @onCreated="handleCreated"
+            />
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -59,11 +68,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCategoryTree } from '@/api/category'
 import { getNewsDetail, createNews, updateNews, submitForReview } from '@/api/news'
 import { ElMessage } from 'element-plus'
+
+// Wangeditor 导入
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
+import '@wangeditor/editor/dist/css/style.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -71,6 +84,9 @@ const router = useRouter()
 const formRef = ref(null)
 const loading = ref(false)
 const categories = ref([])
+
+// 编辑器实例
+const editorRef = shallowRef()
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -85,6 +101,40 @@ const rules = {
   title: [{ required: true, message: '请输入新闻标题', trigger: 'blur' }],
   categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
   content: [{ required: true, message: '请输入新闻内容', trigger: 'blur' }]
+}
+
+// 工具栏配置
+const toolbarConfig = {
+  excludeKeys: [
+    'group-video', // 排除视频上传
+    'fullScreen'   // 排除全屏
+  ]
+}
+
+// 编辑器配置
+const editorConfig = {
+  placeholder: '请输入新闻内容...',
+  MENU_CONF: {
+    // 图片上传配置（暂时使用 base64，后续可改为服务器上传）
+    uploadImage: {
+      maxFileSize: 2 * 1024 * 1024, // 2MB
+      maxNumberOfFiles: 10,
+      allowedFileTypes: ['image/*'],
+      // 使用 base64 方式（无需后端支持）
+      customInsert(res, insertFn) {
+        // res 即服务端返回的数据
+        const url = res.data.url
+        insertFn(url)
+      },
+      // 转 base64
+      base64LimitSize: 5 * 1024 * 1024 // 5MB 以下转 base64
+    }
+  }
+}
+
+// 编辑器创建完成回调
+const handleCreated = (editor) => {
+  editorRef.value = editor
 }
 
 const fetchCategories = async () => {
@@ -114,6 +164,12 @@ const fetchNews = async () => {
 const handleSave = async (submitStatus) => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
+
+  // 额外验证内容是否为空
+  if (!form.content || form.content === '<p><br></p>') {
+    ElMessage.warning('请输入新闻内容')
+    return
+  }
 
   loading.value = true
   try {
@@ -147,10 +203,34 @@ onMounted(() => {
   fetchCategories()
   fetchNews()
 })
+
+// 组件销毁时销毁编辑器
+onBeforeUnmount(() => {
+  const editor = editorRef.value
+  if (editor) {
+    editor.destroy()
+  }
+})
 </script>
 
 <style scoped>
 .news-edit {
   max-width: 1000px;
+}
+
+.editor-container {
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.editor-toolbar {
+  border-bottom: 1px solid #dcdfe6;
+}
+
+.editor-content {
+  height: 400px;
+  overflow-y: auto;
 }
 </style>
