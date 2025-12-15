@@ -104,6 +104,10 @@ public class RedisConfig {
         cacheConfigs.put(CacheConstants.CACHE_COMMENT_COUNT,
                 defaultConfig.entryTtl(Duration.ofSeconds(CacheConstants.TTL_COMMENT_COUNT)));
 
+        // 新闻列表缓存 - 5分钟
+        cacheConfigs.put(CacheConstants.CACHE_NEWS_LIST,
+                defaultConfig.entryTtl(Duration.ofSeconds(CacheConstants.TTL_NEWS_DETAIL)));
+
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigs)

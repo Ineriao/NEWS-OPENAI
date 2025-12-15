@@ -29,6 +29,12 @@ public interface NewsService {
      */
     NewsDetailVO getDetailAndView(Long id);
 
+    /**
+     * 获取已发布新闻列表（带缓存）
+     */
+    PageVO<NewsListVO> getPublishedPage(Long categoryId, Integer pageNum,
+                                         Integer pageSize, String sortBy, String sortOrder);
+
     // ==================== 编辑操作 ====================
 
     /**

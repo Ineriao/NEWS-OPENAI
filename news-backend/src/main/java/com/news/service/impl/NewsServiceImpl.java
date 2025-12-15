@@ -77,6 +77,21 @@ public class NewsServiceImpl implements NewsService {
         return getDetail(id);
     }
 
+    @Override
+    @Cacheable(value = CacheConstants.CACHE_NEWS_LIST,
+            key = "#categoryId + ':' + #pageNum + ':' + #pageSize + ':' + #sortBy + ':' + #sortOrder")
+    public PageVO<NewsListVO> getPublishedPage(Long categoryId, Integer pageNum,
+                                                Integer pageSize, String sortBy, String sortOrder) {
+        NewsQueryDTO query = new NewsQueryDTO();
+        query.setStatus(News.STATUS_PUBLISHED);
+        query.setCategoryId(categoryId);
+        query.setPageNum(pageNum);
+        query.setPageSize(pageSize);
+        query.setSortBy(sortBy);
+        query.setSortOrder(sortOrder);
+        return getPage(query);
+    }
+
     // ==================== 编辑操作 ====================
 
     @Override
@@ -107,7 +122,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
+    @CacheEvict(value = {CacheConstants.CACHE_NEWS, CacheConstants.CACHE_NEWS_LIST}, allEntries = true)
     public News update(Long id, NewsDTO dto, Long operatorId, Integer operatorRole) {
         // 1. 检查新闻是否存在
         News news = newsMapper.selectById(id);
@@ -144,7 +159,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
+    @CacheEvict(value = {CacheConstants.CACHE_NEWS, CacheConstants.CACHE_NEWS_LIST}, allEntries = true)
     public void delete(Long id, Long operatorId, Integer operatorRole) {
         News news = newsMapper.selectById(id);
         if (news == null) {
@@ -188,7 +203,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
+    @CacheEvict(value = {CacheConstants.CACHE_NEWS, CacheConstants.CACHE_NEWS_LIST}, allEntries = true)
     public void approve(Long id, Long reviewerId) {
         News news = newsMapper.selectById(id);
         if (news == null) {
@@ -226,7 +241,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    @CacheEvict(value = CacheConstants.CACHE_NEWS, allEntries = true)
+    @CacheEvict(value = {CacheConstants.CACHE_NEWS, CacheConstants.CACHE_NEWS_LIST}, allEntries = true)
     public void archive(Long id, Long operatorId, Integer operatorRole) {
         News news = newsMapper.selectById(id);
         if (news == null) {

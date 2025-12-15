@@ -19,6 +19,9 @@ public class CacheConstants {
     /** 评论数缓存 */
     public static final String CACHE_COMMENT_COUNT = "commentCount";
 
+    /** 新闻列表缓存 */
+    public static final String CACHE_NEWS_LIST = "newsList";
+
     // ==================== TTL（秒） ====================
 
     /** 分类缓存 TTL - 1小时 */

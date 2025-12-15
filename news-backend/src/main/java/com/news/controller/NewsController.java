@@ -26,14 +26,18 @@ public class NewsController {
     // ==================== 公开接口（游客可访问） ====================
 
     /**
-     * 获取已发布新闻列表
+     * 获取已发布新闻列表（带缓存）
      * GET /api/public/news
      */
     @GetMapping("/public/news")
-    public Result<PageVO<NewsListVO>> getPublishedNews(NewsQueryDTO query) {
-        // 强制只查询已发布的新闻
-        query.setStatus(News.STATUS_PUBLISHED);
-        PageVO<NewsListVO> page = newsService.getPage(query);
+    public Result<PageVO<NewsListVO>> getPublishedNews(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder) {
+        PageVO<NewsListVO> page = newsService.getPublishedPage(
+                categoryId, pageNum, pageSize, sortBy, sortOrder);
         return Result.success(page);
     }
 
