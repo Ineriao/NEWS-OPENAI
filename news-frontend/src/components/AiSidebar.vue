@@ -92,11 +92,13 @@
 import { ref, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useThemeStore } from '@/stores/theme'
 import { aiChat } from '@/api/ai'
 import { Close, Lock, Promotion, ChatDotRound, ChatLineSquare } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 
 const isOpen = ref(false)
 const inputText = ref('')
@@ -200,14 +202,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ========== 触发标签 - 深色风格 ========== */
+/* ========== 触发标签 - 深浅色适配 ========== */
 .ai-trigger-tab {
   position: fixed;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
+  background: var(--bg-nav);
+  color: var(--text-primary);
   padding: 14px 10px;
   border-radius: 8px 0 0 8px;
   cursor: pointer;
@@ -216,19 +218,19 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.15);
+  box-shadow: -2px 0 12px var(--shadow-color);
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-right: none;
 }
 
 .ai-trigger-tab:hover {
-  background: rgba(0, 0, 0, 0.95);
+  background: var(--bg-secondary);
   padding-right: 14px;
 }
 
 .ai-trigger-tab:hover .tab-text {
-  color: #FEE9A1;
+  color: var(--color-primary);
 }
 
 .ai-trigger-tab .tab-text {
@@ -249,19 +251,20 @@ onUnmounted(() => {
   z-index: 998;
 }
 
-/* ========== 侧边栏 - 玻璃拟态 ========== */
+/* ========== 侧边栏 - 深浅色适配 ========== */
 .ai-sidebar {
   position: fixed;
   top: 0;
   right: 0;
   width: 360px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+  box-shadow: -4px 0 20px var(--shadow-color);
   display: flex;
   flex-direction: column;
   z-index: 1000;
+  border-left: 1px solid var(--border-color);
 }
 
 /* ========== 滑入动画 ========== */
@@ -275,18 +278,18 @@ onUnmounted(() => {
   transform: translateX(100%);
 }
 
-/* ========== 深色头部 ========== */
+/* ========== 头部 - 深浅色适配 ========== */
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-nav);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-title {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1rem;
@@ -294,11 +297,11 @@ onUnmounted(() => {
 }
 
 .sidebar-header .el-button {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
 }
 
 .sidebar-header .el-button:hover {
-  color: #FEE9A1;
+  color: var(--color-primary);
   background: transparent;
 }
 
@@ -313,22 +316,26 @@ onUnmounted(() => {
   padding: 40px;
 }
 
+.login-prompt .el-icon {
+  color: var(--text-muted) !important;
+}
+
 .prompt-title {
   font-size: 16px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .prompt-sub {
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-muted);
   margin: 0;
 }
 
 .login-btn {
   margin-top: 8px;
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--color-primary);
   border: none;
   padding: 10px 28px;
   font-weight: 600;
@@ -336,7 +343,7 @@ onUnmounted(() => {
 }
 
 .login-btn:hover {
-  background: rgba(0, 0, 0, 0.95);
+  opacity: 0.9;
 }
 
 /* ========== 消息列表 ========== */
@@ -359,16 +366,20 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.empty-hint .el-icon {
+  color: var(--text-muted) !important;
+}
+
 .hint-title {
   font-size: 15px;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--text-secondary);
   margin: 12px 0 4px 0;
 }
 
 .hint-sub {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -398,20 +409,20 @@ onUnmounted(() => {
 }
 
 .message.user .message-bubble {
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--color-primary);
   color: #fff;
   border-bottom-right-radius: 4px;
 }
 
 .message.ai .message-bubble {
-  background: rgba(0, 0, 0, 0.05);
-  color: rgba(0, 0, 0, 0.85);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   border-bottom-left-radius: 4px;
 }
 
 .message-meta {
   font-size: 10px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-muted);
   margin-top: 4px;
   text-align: right;
 }
@@ -426,7 +437,7 @@ onUnmounted(() => {
 .dot {
   width: 6px;
   height: 6px;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--text-muted);
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out both;
 }
@@ -442,25 +453,30 @@ onUnmounted(() => {
 /* ========== 输入区域 ========== */
 .sidebar-input {
   padding: 14px 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .sidebar-input :deep(.el-input__wrapper) {
   border-radius: 8px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 1px var(--border-color) inset;
 }
 
 .sidebar-input :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
 }
 
 .sidebar-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #6C5DAB inset;
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
+}
+
+.sidebar-input :deep(.el-input__inner) {
+  color: var(--text-primary);
 }
 
 .sidebar-input :deep(.el-input-group__append) {
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--color-primary);
   border: none;
   box-shadow: none;
 }
@@ -470,7 +486,7 @@ onUnmounted(() => {
 }
 
 .sidebar-input :deep(.el-input-group__append .el-button:hover) {
-  color: #FEE9A1;
+  color: var(--color-accent);
 }
 
 /* ========== 自定义滚动条 ========== */
@@ -483,11 +499,11 @@ onUnmounted(() => {
 }
 
 .sidebar-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
 
 .sidebar-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
 </style>

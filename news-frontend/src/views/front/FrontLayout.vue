@@ -48,6 +48,11 @@
             </template>
           </el-input>
 
+          <!-- 主题切换按钮 -->
+          <el-button class="theme-toggle" circle @click="themeStore.toggleTheme">
+            <el-icon><component :is="themeStore.isDark ? 'Sunny' : 'Moon'" /></el-icon>
+          </el-button>
+
           <template v-if="userStore.isLoggedIn">
             <el-dropdown trigger="click">
               <span class="user-info">
@@ -95,11 +100,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useThemeStore } from '@/stores/theme'
 import { getCategoryTree } from '@/api/category'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 const categories = ref([])
 const searchKeyword = ref('')
 
@@ -147,12 +154,15 @@ onMounted(() => {
   flex-direction: column;
 }
 
+/* ========== 页首样式 ========== */
 .header {
-  background: rgba(0, 0, 0, 0.95);
+  background: var(--bg-nav);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 10px var(--shadow-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .header-content {
@@ -178,19 +188,19 @@ onMounted(() => {
 .logo-text {
   font-size: 24px;
   font-weight: 900;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: 0.2rem;
 }
 
 .logo-divider {
-  color: #FEE9A1;
+  color: var(--color-primary);
   font-size: 18px;
   font-weight: 300;
 }
 
 .logo-sub {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   letter-spacing: 0.1rem;
 }
 
@@ -200,7 +210,7 @@ onMounted(() => {
 }
 
 .nav-item {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -213,7 +223,7 @@ onMounted(() => {
   text-decoration: none;
 }
 
-.nav-item:hover { color: #FEE9A1; }
+.nav-item:hover { color: var(--color-primary); }
 
 .header-right {
   display: flex;
@@ -224,21 +234,21 @@ onMounted(() => {
 .search-input { width: 200px; }
 
 .search-input :deep(.el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   box-shadow: none;
 }
 
-.search-input :deep(.el-input__inner) { color: #fff; }
-.search-input :deep(.el-input__inner::placeholder) { color: rgba(255, 255, 255, 0.5); }
+.search-input :deep(.el-input__inner) { color: var(--text-primary); }
+.search-input :deep(.el-input__inner::placeholder) { color: var(--text-muted); }
 
 .search-input :deep(.el-input-group__append) {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-left: none;
 }
 
-.search-input :deep(.el-input-group__append .el-button) { color: rgba(255, 255, 255, 0.8); }
+.search-input :deep(.el-input-group__append .el-button) { color: var(--text-secondary); }
 
 .user-info {
   display: flex;
@@ -248,7 +258,7 @@ onMounted(() => {
 }
 
 .user-avatar { background: linear-gradient(135deg, #A795BF, #6C5DAB); }
-.username { color: rgba(255, 255, 255, 0.9); font-weight: 500; }
+.username { color: var(--text-primary); font-weight: 500; }
 
 .user-role-tag {
   font-size: 10px;
@@ -258,7 +268,7 @@ onMounted(() => {
 }
 
 .auth-link {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -267,7 +277,7 @@ onMounted(() => {
   transition: all 0.3s;
 }
 
-.auth-link:hover { color: #FEE9A1; }
+.auth-link:hover { color: var(--color-primary); }
 
 .auth-link--primary {
   background: linear-gradient(135deg, #A795BF, #6C5DAB);
@@ -277,6 +287,7 @@ onMounted(() => {
 
 .auth-link--primary:hover { color: #fff; opacity: 0.9; }
 
+/* ========== 主内容区 ========== */
 .main-content {
   flex: 1;
   max-width: 1400px;
@@ -285,12 +296,14 @@ onMounted(() => {
   width: 100%;
 }
 
+/* ========== 页脚样式 ========== */
 .footer {
-  background: rgba(0, 0, 0, 0.95);
-  color: #fff;
+  background: var(--bg-nav);
+  color: var(--text-primary);
   padding: 40px 30px;
   margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .footer-content {
@@ -302,15 +315,43 @@ onMounted(() => {
 .footer-slogan {
   font-size: 18px;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   letter-spacing: 0.3rem;
   margin-bottom: 20px;
   font-style: italic;
 }
 
 .copyright {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
   font-size: 12px;
   letter-spacing: 0.2rem;
+}
+
+/* ========== 主题切换按钮 ========== */
+.theme-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.3s;
+}
+
+.theme-toggle:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* 深色模式下图标白色发光效果 */
+:global(html.dark) .theme-toggle {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+:global(html.dark) .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
 }
 </style>

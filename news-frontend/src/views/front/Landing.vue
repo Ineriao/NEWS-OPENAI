@@ -6,6 +6,11 @@
       <div class="cursor-dot" :style="cursorStyle"></div>
     </div>
 
+    <!-- 主题切换按钮 -->
+    <button class="theme-toggle" @click="themeStore.toggleTheme">
+      <component :is="themeStore.isDark ? Sunny : Moon" class="theme-icon" />
+    </button>
+
     <!-- 中央标题 -->
     <div class="hero-title">
       <h1>新闻发布系统</h1>
@@ -28,7 +33,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useThemeStore } from '@/stores/theme'
+import { Sunny, Moon } from '@element-plus/icons-vue'
+
+const themeStore = useThemeStore()
 
 const wavesContainer = ref(null)
 const wavesSvg = ref(null)
@@ -160,6 +169,9 @@ function setLines() {
   const xStart = (width - xGap * totalLines) / 2
   const yStart = (height - yGap * totalPoints) / 2
 
+  // 根据主题设置波浪线颜色
+  const strokeColor = themeStore.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.18)'
+
   for (let i = 0; i <= totalLines; i++) {
     const points = []
     for (let j = 0; j <= totalPoints; j++) {
@@ -172,13 +184,26 @@ function setLines() {
     }
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
     path.setAttribute('fill', 'none')
-    path.setAttribute('stroke', 'rgba(0, 0, 0, 0.18)')
+    path.setAttribute('stroke', strokeColor)
     path.setAttribute('stroke-width', '1')
     wavesSvg.value.appendChild(path)
     paths.push(path)
     lines.push(points)
   }
 }
+
+// 更新波浪线颜色
+function updateWaveColors() {
+  const strokeColor = themeStore.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.18)'
+  paths.forEach(path => {
+    path.setAttribute('stroke', strokeColor)
+  })
+}
+
+// 监听主题变化
+watch(() => themeStore.isDark, () => {
+  updateWaveColors()
+})
 
 // 更新点位置
 function movePoints(time) {
@@ -358,7 +383,7 @@ onUnmounted(() => {
   height: 100vh;
   overflow: hidden;
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: linear-gradient(135deg, #CBD4E5 0%, #A795BF 25%, #FEE9A1 50%, #6C5DAB 75%, #CCA2A7 100%);
+  background: var(--gradient-bg);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -390,12 +415,59 @@ onUnmounted(() => {
   left: 0;
   width: 0.6rem;
   height: 0.6rem;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--text-primary);
   border-radius: 50%;
   pointer-events: none;
   z-index: 10;
   margin-left: -0.3rem;
   margin-top: -0.3rem;
+  opacity: 0.7;
+}
+
+/* ========== 主题切换按钮 ========== */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-nav);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.theme-toggle:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.theme-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 深色模式下发光效果 */
+:global(html.dark) .theme-toggle {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+:global(html.dark) .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
 }
 
 .hero-title {
@@ -411,30 +483,52 @@ onUnmounted(() => {
 .hero-title h1 {
   font-size: 4rem;
   font-weight: 900;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   letter-spacing: 0.5rem;
   text-transform: uppercase;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 10px var(--shadow-color);
+  animation: breatheGlow 3s ease-in-out infinite;
+}
+
+@keyframes breatheGlow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px var(--color-primary-light),
+      0 0 20px var(--color-primary-light),
+      0 0 30px var(--color-primary);
+    opacity: 0.9;
+  }
+  50% {
+    text-shadow:
+      0 0 20px var(--color-primary-light),
+      0 0 40px var(--color-primary),
+      0 0 60px var(--color-primary),
+      0 0 80px var(--color-accent);
+    opacity: 1;
+  }
 }
 
 .hero-title p {
   font-size: 1.2rem;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   letter-spacing: 0.3rem;
 }
 
+/* ========== 底部导航栏 - 深浅色适配 ========== */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 120px;
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--bg-nav);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
+  border-top: 1px solid var(--border-color);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .nav-container {
@@ -454,14 +548,14 @@ onUnmounted(() => {
   justify-content: center;
   height: 120px;
   text-decoration: none;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.15rem;
   text-transform: uppercase;
   position: relative;
   transition: all 0.3s ease;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid var(--border-color);
 }
 
 .nav-item:last-child {
@@ -469,8 +563,8 @@ onUnmounted(() => {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FEE9A1;
+  background: var(--bg-secondary);
+  color: var(--color-primary);
 }
 
 .nav-item::before {
@@ -481,7 +575,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   width: 0;
   height: 3px;
-  background: linear-gradient(90deg, #CBD4E5, #A795BF, #FEE9A1);
+  background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary), var(--color-accent));
   transition: width 0.3s ease;
 }
 
@@ -490,7 +584,7 @@ onUnmounted(() => {
 }
 
 .nav-divider {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-muted);
   font-size: 2rem;
   font-weight: 300;
   padding: 0 20px;
@@ -523,6 +617,18 @@ onUnmounted(() => {
   .nav-divider {
     padding: 0 10px;
     font-size: 1.5rem;
+  }
+
+  .theme-toggle {
+    top: 10px;
+    left: 10px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 </style>

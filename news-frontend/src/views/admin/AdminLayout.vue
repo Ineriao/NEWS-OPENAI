@@ -67,6 +67,11 @@
         </div>
 
         <div class="header-right">
+          <!-- 主题切换按钮 -->
+          <el-button class="theme-toggle" circle @click="themeStore.toggleTheme">
+            <el-icon><component :is="themeStore.isDark ? 'Sunny' : 'Moon'" /></el-icon>
+          </el-button>
+
           <el-dropdown trigger="click">
             <span class="user-info">
               <el-avatar :size="32" class="user-avatar">{{ userStore.username.charAt(0) }}</el-avatar>
@@ -99,11 +104,13 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useThemeStore } from '@/stores/theme'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 
 const isCollapse = ref(false)
 
@@ -119,9 +126,10 @@ const handleLogout = () => {
   height: 100vh;
 }
 
+/* ========== 侧边栏（保持深色风格）========== */
 .aside {
-  background: rgba(0, 0, 0, 0.95);
-  transition: width 0.3s;
+  background: #1a1e2e;
+  transition: width 0.3s, background 0.3s;
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -147,7 +155,7 @@ const handleLogout = () => {
 }
 
 .logo-divider {
-  color: #FEE9A1;
+  color: var(--color-primary);
   font-size: 16px;
   font-weight: 300;
 }
@@ -178,7 +186,7 @@ const handleLogout = () => {
 .admin-menu :deep(.el-menu-item:hover),
 .admin-menu :deep(.el-sub-menu__title:hover) {
   background: rgba(255, 255, 255, 0.1);
-  color: #FEE9A1;
+  color: var(--color-accent);
 }
 
 .admin-menu :deep(.el-menu-item.is-active) {
@@ -199,8 +207,9 @@ const handleLogout = () => {
   background: linear-gradient(135deg, #A795BF, #6C5DAB);
 }
 
+/* ========== 主容器 ========== */
 .main-container {
-  background: linear-gradient(135deg, #CBD4E5 0%, #A795BF 25%, #FEE9A1 50%, #6C5DAB 75%, #CCA2A7 100%);
+  background: var(--gradient-bg);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -211,15 +220,17 @@ const handleLogout = () => {
   100% { background-position: 0% 50%; }
 }
 
+/* ========== 顶部栏 ========== */
 .header {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-nav);
   backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px var(--shadow-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .header-left {
@@ -231,12 +242,12 @@ const handleLogout = () => {
 .collapse-btn {
   font-size: 20px;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   transition: color 0.3s;
 }
 
 .collapse-btn:hover {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .header :deep(.el-breadcrumb__item) {
@@ -244,18 +255,48 @@ const handleLogout = () => {
 }
 
 .header :deep(.el-breadcrumb__inner) {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
 }
 
 .header :deep(.el-breadcrumb__inner.is-link:hover) {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 15px;
 }
 
+/* ========== 主题切换按钮 ========== */
+.theme-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.3s;
+}
+
+.theme-toggle:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* 深色模式下图标白色发光效果 */
+:global(html.dark) .theme-toggle {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+:global(html.dark) .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+}
+
+/* ========== 用户信息 ========== */
 .user-info {
   display: flex;
   align-items: center;
@@ -267,7 +308,7 @@ const handleLogout = () => {
 }
 
 .user-info:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-secondary);
 }
 
 .user-avatar {
@@ -275,13 +316,13 @@ const handleLogout = () => {
 }
 
 .username {
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .role-tag {
   font-size: 12px;
-  color: #6C5DAB;
+  color: var(--color-primary);
   background: linear-gradient(135deg, rgba(167, 149, 191, 0.2), rgba(108, 93, 171, 0.2));
   padding: 2px 10px;
   border-radius: 4px;
@@ -289,25 +330,27 @@ const handleLogout = () => {
   letter-spacing: 0.05rem;
 }
 
+/* ========== 主内容区 ========== */
 .main {
   padding: 20px;
   overflow-y: auto;
 }
 
 .main :deep(.el-card) {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px var(--shadow-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .main :deep(.el-card__header) {
-  background: rgba(0, 0, 0, 0.95);
-  color: #fff;
+  background: var(--bg-nav);
+  color: var(--text-primary);
   border-radius: 12px 12px 0 0;
   padding: 15px 20px;
-  border-bottom: none;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .main :deep(.el-button--primary) {
@@ -324,8 +367,8 @@ const handleLogout = () => {
 }
 
 .main :deep(.el-table th) {
-  background: rgba(0, 0, 0, 0.03);
-  color: rgba(0, 0, 0, 0.85);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -334,6 +377,6 @@ const handleLogout = () => {
 }
 
 .main :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-secondary);
 }
 </style>

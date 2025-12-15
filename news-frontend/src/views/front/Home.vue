@@ -252,7 +252,7 @@ onMounted(() => {
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 30px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px var(--shadow-color);
 }
 
 .banner-item {
@@ -286,24 +286,27 @@ onMounted(() => {
 .section-header h2 {
   font-size: 18px;
   font-weight: 800;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   letter-spacing: 0.1rem;
   text-transform: uppercase;
-  border-left: 4px solid #6C5DAB;
+  border-left: 4px solid var(--color-primary);
   padding-left: 15px;
 }
 
+/* ========== 新闻列表卡片 ========== */
 .news-list {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 25px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .news-item {
   padding: 20px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -319,17 +322,17 @@ onMounted(() => {
 .news-title {
   font-size: 18px;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   margin-bottom: 10px;
   transition: color 0.3s;
 }
 
 .news-item:hover .news-title {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .news-summary {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.7;
   margin-bottom: 12px;
@@ -342,7 +345,7 @@ onMounted(() => {
 .news-meta {
   display: flex;
   gap: 20px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -358,25 +361,28 @@ onMounted(() => {
   justify-content: center;
 }
 
+/* ========== 侧边栏卡片 ========== */
 .sidebar-card {
   margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: none;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .sidebar-card :deep(.el-card__header) {
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
+  background: var(--bg-nav);
+  color: var(--text-primary);
   font-weight: 700;
   letter-spacing: 0.1rem;
   text-transform: uppercase;
   font-size: 13px;
   border-radius: 12px 12px 0 0;
   padding: 15px 20px;
-  border: none;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .hot-item {
@@ -392,7 +398,7 @@ onMounted(() => {
 }
 
 .hot-item:hover .title {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .rank {
@@ -400,12 +406,12 @@ onMounted(() => {
   height: 22px;
   line-height: 22px;
   text-align: center;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--bg-secondary);
   border-radius: 4px;
   font-size: 12px;
   font-weight: 700;
   margin-right: 12px;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--text-muted);
 }
 
 .rank.top {
@@ -416,7 +422,7 @@ onMounted(() => {
 .hot-item .title {
   flex: 1;
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -435,14 +441,15 @@ onMounted(() => {
   padding: 0 12px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .hot-search-card :deep(.el-tabs__item.is-active) {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .hot-search-card :deep(.el-tabs__active-bar) {
-  background: #6C5DAB;
+  background: var(--color-primary);
 }
 
 .hot-list {
@@ -461,7 +468,7 @@ onMounted(() => {
 }
 
 .hot-search-item:hover {
-  background: rgba(108, 93, 171, 0.08);
+  background: rgba(108, 93, 171, 0.15);
 }
 
 .hot-search-item .rank {
@@ -469,12 +476,12 @@ onMounted(() => {
   height: 20px;
   line-height: 20px;
   text-align: center;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--bg-secondary);
   border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
   margin-right: 10px;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -486,19 +493,19 @@ onMounted(() => {
 .hot-search-item .title {
   flex: 1;
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .hot-search-item:hover .title {
-  color: #6C5DAB;
+  color: var(--color-primary);
 }
 
 .hot-search-item .hot-value {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--text-muted);
   margin-left: 8px;
   flex-shrink: 0;
 }
