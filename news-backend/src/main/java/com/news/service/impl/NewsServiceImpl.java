@@ -9,6 +9,7 @@ import com.news.dto.NewsQueryDTO;
 import com.news.entity.News;
 import com.news.entity.User;
 import com.news.service.CategoryService;
+import com.news.service.NewsSearchService;
 import com.news.service.NewsService;
 import com.news.service.ViewCountService;
 import com.news.vo.NewsDetailVO;
@@ -38,6 +39,9 @@ public class NewsServiceImpl implements NewsService {
 
     @Autowired
     private ViewCountService viewCountService;
+
+    @Autowired(required = false)
+    private NewsSearchService newsSearchService;
 
     // ==================== 查询方法 ====================
 
@@ -175,6 +179,11 @@ public class NewsServiceImpl implements NewsService {
         }
 
         newsMapper.deleteById(id);
+
+        // 从 ES 删除索引（以防万一）
+        if (newsSearchService != null) {
+            newsSearchService.deleteIndex(id);
+        }
     }
 
     // ==================== 状态流转 ====================
@@ -219,6 +228,12 @@ public class NewsServiceImpl implements NewsService {
         news.setReviewerId(reviewerId);
         news.setPublishTime(LocalDateTime.now());
         newsMapper.updateById(news);
+
+        // 同步到 ES
+        if (newsSearchService != null) {
+            News fullNews = newsMapper.selectByIdWithDetails(id);
+            newsSearchService.indexNews(fullNews);
+        }
     }
 
     @Override
@@ -260,6 +275,11 @@ public class NewsServiceImpl implements NewsService {
 
         news.setStatus(News.STATUS_ARCHIVED);
         newsMapper.updateById(news);
+
+        // 从 ES 删除索引
+        if (newsSearchService != null) {
+            newsSearchService.deleteIndex(id);
+        }
     }
 
     // ==================== 辅助方法 ====================

@@ -5,6 +5,7 @@ import com.news.dto.NewsDTO;
 import com.news.dto.NewsQueryDTO;
 import com.news.entity.News;
 import com.news.entity.User;
+import com.news.service.NewsSearchService;
 import com.news.service.NewsService;
 import com.news.vo.NewsDetailVO;
 import com.news.vo.NewsListVO;
@@ -22,6 +23,9 @@ public class NewsController {
 
     @Autowired
     private NewsService newsService;
+
+    @Autowired
+    private NewsSearchService newsSearchService;
 
     // ==================== 公开接口（游客可访问） ====================
 
@@ -59,25 +63,34 @@ public class NewsController {
     }
 
     /**
-     * 搜索新闻
+     * 搜索新闻（使用 Elasticsearch）
      * GET /api/public/news/search?keyword=xxx
      */
     @GetMapping("/public/news/search")
     public Result<PageVO<NewsListVO>> searchNews(
             @RequestParam String keyword,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder) {
-        NewsQueryDTO query = new NewsQueryDTO();
-        query.setKeyword(keyword);
-        query.setStatus(News.STATUS_PUBLISHED);
-        query.setPageNum(pageNum);
-        query.setPageSize(pageSize);
-        query.setSortBy(sortBy);
-        query.setSortOrder(sortOrder);
-        PageVO<NewsListVO> page = newsService.getPage(query);
-        return Result.success(page);
+        try {
+            PageVO<NewsListVO> page = newsSearchService.search(
+                    keyword, categoryId, pageNum, pageSize, sortBy, sortOrder);
+            return Result.success(page);
+        } catch (Exception e) {
+            // ES 不可用时降级到 MySQL 查询
+            NewsQueryDTO query = new NewsQueryDTO();
+            query.setKeyword(keyword);
+            query.setStatus(News.STATUS_PUBLISHED);
+            query.setCategoryId(categoryId);
+            query.setPageNum(pageNum);
+            query.setPageSize(pageSize);
+            query.setSortBy(sortBy);
+            query.setSortOrder(sortOrder);
+            PageVO<NewsListVO> page = newsService.getPage(query);
+            return Result.success(page);
+        }
     }
 
     // ==================== 编辑接口（需要编辑权限） ====================
@@ -265,6 +278,25 @@ public class NewsController {
             return Result.success("存档成功", null);
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 全量同步新闻到 ES（管理员）
+     * POST /api/admin/news/sync-es
+     */
+    @PostMapping("/admin/news/sync-es")
+    public Result<Void> syncToES(HttpServletRequest request) {
+        Integer role = (Integer) request.getAttribute("role");
+        if (role < User.ROLE_ADMIN) {
+            return Result.forbidden();
+        }
+
+        try {
+            newsSearchService.syncAll();
+            return Result.success("同步完成", null);
+        } catch (Exception e) {
+            return Result.error("同步失败: " + e.getMessage());
         }
     }
 }

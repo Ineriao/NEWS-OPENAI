@@ -48,6 +48,10 @@ spring:
         max-idle: 8
         min-idle: 0
 
+  # Elasticsearch 配置
+  elasticsearch:
+    uris: http://localhost:9200
+
 # MyBatis-Plus 配置
 mybatis-plus:
   type-aliases-package: com.news.entity
