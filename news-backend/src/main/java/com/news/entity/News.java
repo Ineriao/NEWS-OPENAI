@@ -46,6 +46,12 @@ public class News {
     /** 浏览次数 */
     private Integer viewCount;
 
+    /** 点赞数 */
+    private Integer likeCount;
+
+    /** 收藏数 */
+    private Integer collectionCount;
+
     /** 发布时间 */
     private LocalDateTime publishTime;
 
@@ -77,6 +83,14 @@ public class News {
     /** 审核人用户名 */
     @TableField(exist = false)
     private String reviewerName;
+
+    /** 当前用户是否已点赞 */
+    @TableField(exist = false)
+    private Boolean liked;
+
+    /** 当前用户是否已收藏 */
+    @TableField(exist = false)
+    private Boolean collected;
 
     /**
      * 获取状态名称

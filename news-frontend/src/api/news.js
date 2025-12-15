@@ -58,3 +58,32 @@ export function rejectNews(id, reason) {
 export function archiveNews(id) {
   return request.put(`/news/${id}/archive`)
 }
+
+// ==================== 点赞接口 ====================
+
+// 点赞/取消点赞 (toggle)
+export function toggleLike(newsId) {
+  return request.post(`/news/${newsId}/like`)
+}
+
+// 获取点赞状态和数量
+export function getLikeStatus(newsId) {
+  return request.get(`/public/news/${newsId}/like`)
+}
+
+// ==================== 收藏接口 ====================
+
+// 收藏/取消收藏 (toggle)
+export function toggleCollection(newsId) {
+  return request.post(`/news/${newsId}/collect`)
+}
+
+// 获取收藏状态和数量
+export function getCollectionStatus(newsId) {
+  return request.get(`/public/news/${newsId}/collect`)
+}
+
+// 获取用户收藏列表
+export function getUserCollections(params) {
+  return request.get('/user/collections', { params })
+}

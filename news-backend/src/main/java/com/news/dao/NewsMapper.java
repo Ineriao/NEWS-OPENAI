@@ -63,4 +63,28 @@ public interface NewsMapper extends BaseMapper<News> {
      */
     @Update("UPDATE news SET view_count = view_count + 1 WHERE id = #{id}")
     void incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 增加点赞数
+     */
+    @Update("UPDATE news SET like_count = like_count + 1 WHERE id = #{id}")
+    void incrementLikeCount(@Param("id") Long id);
+
+    /**
+     * 减少点赞数
+     */
+    @Update("UPDATE news SET like_count = GREATEST(like_count - 1, 0) WHERE id = #{id}")
+    void decrementLikeCount(@Param("id") Long id);
+
+    /**
+     * 增加收藏数
+     */
+    @Update("UPDATE news SET collection_count = collection_count + 1 WHERE id = #{id}")
+    void incrementCollectionCount(@Param("id") Long id);
+
+    /**
+     * 减少收藏数
+     */
+    @Update("UPDATE news SET collection_count = GREATEST(collection_count - 1, 0) WHERE id = #{id}")
+    void decrementCollectionCount(@Param("id") Long id);
 }

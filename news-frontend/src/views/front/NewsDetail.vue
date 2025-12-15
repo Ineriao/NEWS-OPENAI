@@ -10,6 +10,24 @@
           <span><el-icon><Clock /></el-icon> {{ formatTime(news.publishTime) }}</span>
           <span><el-icon><View /></el-icon> {{ news.viewCount }} 阅读</span>
         </div>
+        <div class="news-actions">
+          <el-button
+            :type="liked ? 'primary' : 'default'"
+            :class="{ 'is-liked': liked }"
+            @click="handleLike"
+          >
+            <el-icon><Pointer /></el-icon>
+            <span>{{ likeCount }}</span>
+          </el-button>
+          <el-button
+            :type="collected ? 'warning' : 'default'"
+            :class="{ 'is-collected': collected }"
+            @click="handleCollect"
+          >
+            <el-icon><component :is="collected ? 'StarFilled' : 'Star'" /></el-icon>
+            <span>{{ collectionCount }}</span>
+          </el-button>
+        </div>
         <el-divider />
         <div class="news-content" v-html="news.content"></div>
       </el-card>
@@ -83,7 +101,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getNewsDetail } from '@/api/news'
+import { getNewsDetail, toggleLike, getLikeStatus, toggleCollection, getCollectionStatus } from '@/api/news'
 import { getComments, createComment } from '@/api/comment'
 import { ElMessage } from 'element-plus'
 
@@ -96,6 +114,12 @@ const news = ref(null)
 const comments = ref([])
 const commentContent = ref('')
 const replyTo = ref(null)
+
+// 点赞和收藏状态
+const liked = ref(false)
+const likeCount = ref(0)
+const collected = ref(false)
+const collectionCount = ref(0)
 
 const fetchNews = async () => {
   loading.value = true
@@ -115,6 +139,62 @@ const fetchComments = async () => {
     comments.value = res.data || []
   } catch (error) {
     console.error('获取评论失败', error)
+  }
+}
+
+// 获取点赞状态
+const fetchLikeStatus = async () => {
+  try {
+    const res = await getLikeStatus(route.params.id)
+    liked.value = res.data?.liked || false
+    likeCount.value = res.data?.likeCount || 0
+  } catch (error) {
+    console.error('获取点赞状态失败', error)
+  }
+}
+
+// 获取收藏状态
+const fetchCollectionStatus = async () => {
+  try {
+    const res = await getCollectionStatus(route.params.id)
+    collected.value = res.data?.collected || false
+    collectionCount.value = res.data?.collectionCount || 0
+  } catch (error) {
+    console.error('获取收藏状态失败', error)
+  }
+}
+
+// 点赞/取消点赞
+const handleLike = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  try {
+    const res = await toggleLike(route.params.id)
+    liked.value = res.data?.liked
+    likeCount.value = res.data?.likeCount
+    ElMessage.success(liked.value ? '点赞成功' : '已取消点赞')
+  } catch (error) {
+    console.error('点赞操作失败', error)
+    ElMessage.error('操作失败')
+  }
+}
+
+// 收藏/取消收藏
+const handleCollect = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  try {
+    const res = await toggleCollection(route.params.id)
+    collected.value = res.data?.collected
+    collectionCount.value = res.data?.collectionCount
+    ElMessage.success(collected.value ? '收藏成功' : '已取消收藏')
+  } catch (error) {
+    console.error('收藏操作失败', error)
+    ElMessage.error('操作失败')
   }
 }
 
@@ -150,6 +230,8 @@ const formatTime = (time) => {
 onMounted(() => {
   fetchNews()
   fetchComments()
+  fetchLikeStatus()
+  fetchCollectionStatus()
 })
 </script>
 
@@ -191,6 +273,38 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.news-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.news-actions .el-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.news-actions .el-button.is-liked {
+  background: linear-gradient(135deg, #A795BF, #6C5DAB);
+  border-color: #6C5DAB;
+  color: #fff;
+}
+
+.news-actions .el-button.is-collected {
+  background: linear-gradient(135deg, #F5A623, #E6930D);
+  border-color: #E6930D;
+  color: #fff;
+}
+
+.news-actions .el-button:not(.is-liked):not(.is-collected):hover {
+  border-color: #6C5DAB;
+  color: #6C5DAB;
 }
 
 .news-content {
