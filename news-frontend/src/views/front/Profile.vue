@@ -373,6 +373,7 @@ const handleLogout = () => {
 
 .profile-content {
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 4px 20px var(--shadow-color);

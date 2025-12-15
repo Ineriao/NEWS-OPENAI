@@ -68,7 +68,13 @@
 
         <div class="header-right">
           <!-- 主题切换按钮 -->
-          <el-button class="theme-toggle" circle @click="themeStore.toggleTheme">
+          <el-button
+            class="theme-toggle"
+            circle
+            @click="themeStore.toggleTheme"
+            :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'"
+            :aria-label="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'"
+          >
             <el-icon><component :is="themeStore.isDark ? 'Sunny' : 'Moon'" /></el-icon>
           </el-button>
 
@@ -223,6 +229,7 @@ const handleLogout = () => {
 /* ========== 顶部栏 ========== */
 .header {
   background: var(--bg-nav);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 10px var(--shadow-color);
   display: flex;
@@ -338,6 +345,7 @@ const handleLogout = () => {
 
 .main :deep(.el-card) {
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   border: 1px solid var(--border-color);
@@ -378,5 +386,42 @@ const handleLogout = () => {
 
 .main :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background: var(--bg-secondary);
+}
+
+/* 表格操作按钮样式 - 统一白色字体 */
+.main :deep(.el-table) .el-button.is-link {
+  font-weight: 500;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 浅色模式下删除按钮用黑色字体 */
+.main :deep(.el-table) .el-button--danger.is-link {
+  color: #303133 !important;
+  text-shadow: none;
+}
+
+.main :deep(.el-table) .el-button--primary.is-link:hover {
+  color: #A795BF !important;
+}
+
+.main :deep(.el-table) .el-button--danger.is-link:hover {
+  color: #f56c6c !important;
+}
+
+.main :deep(.el-table) .el-button--success.is-link:hover {
+  color: #95d475 !important;
+}
+</style>
+
+<!-- 深色模式样式 - 非 scoped -->
+<style>
+html.dark .admin-layout .main .el-table .el-button--danger.is-link {
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .admin-layout .main .el-table .el-button--danger.is-link:hover {
+  color: #fab6b6 !important;
 }
 </style>

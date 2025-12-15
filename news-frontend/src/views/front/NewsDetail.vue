@@ -46,14 +46,41 @@
             <el-button type="primary" link size="small" @click="cancelReply">取消</el-button>
           </div>
           <el-input
+            ref="commentInputRef"
             v-model="commentContent"
             type="textarea"
             :rows="3"
             :placeholder="replyTo ? `回复 @${replyTo.username}...` : '发表你的评论...'"
           />
-          <el-button type="primary" :loading="submitting" @click="submitComment">
-            {{ replyTo ? '回复' : '发表评论' }}
-          </el-button>
+          <div class="comment-toolbar">
+            <!-- 表情选择器 -->
+            <el-popover
+              placement="bottom-start"
+              :width="320"
+              trigger="click"
+              :teleported="false"
+            >
+              <template #reference>
+                <el-button type="default" size="small" class="emoji-btn" title="插入表情" aria-label="插入表情">
+                  <span class="emoji-icon">😊</span> 表情
+                </el-button>
+              </template>
+              <div class="emoji-picker">
+                <span
+                  v-for="emoji in emojiList"
+                  :key="emoji"
+                  class="emoji-item"
+                  @click="insertEmoji(emoji)"
+                >
+                  {{ emoji }}
+                </span>
+              </div>
+            </el-popover>
+            <span class="tip">支持表情和链接（链接将自动识别）</span>
+            <el-button type="primary" :loading="submitting" @click="submitComment">
+              {{ replyTo ? '回复' : '发表评论' }}
+            </el-button>
+          </div>
         </div>
         <div class="login-tip" v-else>
           <router-link to="/login">登录</router-link> 后参与评论
@@ -71,7 +98,7 @@
                 <span class="time">{{ formatTime(comment.createTime) }}</span>
               </div>
             </div>
-            <div class="comment-content">{{ comment.content }}</div>
+            <div class="comment-content" v-html="renderContent(comment.content)"></div>
             <div class="comment-actions">
               <el-button
                 type="primary"
@@ -99,7 +126,7 @@
                 <span v-if="reply.replyToUsername" class="reply-to">
                   回复 <span class="reply-username">@{{ reply.replyToUsername }}</span>
                 </span>
-                <span class="content">：{{ reply.content }}</span>
+                <span class="content" v-html="': ' + renderContent(reply.content)"></span>
               </div>
             </div>
           </div>
@@ -128,12 +155,46 @@ const news = ref(null)
 const comments = ref([])
 const commentContent = ref('')
 const replyTo = ref(null)
+const commentInputRef = ref(null)
 
 // 点赞和收藏状态
 const liked = ref(false)
 const likeCount = ref(0)
 const collected = ref(false)
 const collectionCount = ref(0)
+
+// 表情列表
+const emojiList = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+  '🙂', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗',
+  '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+  '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒',
+  '🙄', '😬', '🤯', '😳', '🥺', '😢', '😭', '😤',
+  '😠', '😡', '🤬', '😈', '👿', '💀', '☠️', '💩',
+  '👍', '👎', '👏', '🙌', '🤝', '🙏', '💪', '❤️',
+  '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💯'
+]
+
+// 插入表情
+const insertEmoji = (emoji) => {
+  commentContent.value += emoji
+}
+
+// 渲染评论内容（自动识别链接）
+const renderContent = (content) => {
+  if (!content) return ''
+  // 转义 HTML 特殊字符，防止 XSS
+  const escaped = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+
+  // URL 正则匹配
+  const urlRegex = /(https?:\/\/[^\s<]+)/g
+  return escaped.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="comment-link">$1</a>')
+}
 
 const fetchNews = async () => {
   loading.value = true
@@ -289,6 +350,7 @@ onMounted(() => {
 .news-card {
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -361,6 +423,7 @@ onMounted(() => {
 .comment-card {
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -486,5 +549,73 @@ onMounted(() => {
 
 .reply-item .content {
   color: rgba(0, 0, 0, 0.75);
+}
+
+/* 评论工具栏 */
+.comment-toolbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comment-toolbar .tip {
+  flex: 1;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.emoji-btn {
+  background: #fff !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
+}
+
+.emoji-btn:hover {
+  border-color: #6C5DAB !important;
+  color: #6C5DAB !important;
+}
+
+.emoji-icon {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* 表情选择器 */
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.emoji-item {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.emoji-item:hover {
+  background: rgba(108, 93, 171, 0.1);
+}
+
+/* 评论中的链接 */
+.comment-content :deep(.comment-link),
+.reply-item .content :deep(.comment-link) {
+  color: #6C5DAB;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.comment-content :deep(.comment-link):hover,
+.reply-item .content :deep(.comment-link):hover {
+  text-decoration: underline;
 }
 </style>

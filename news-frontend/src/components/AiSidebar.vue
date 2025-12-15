@@ -259,6 +259,7 @@ onUnmounted(() => {
   width: 360px;
   height: 100vh;
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: -4px 0 20px var(--shadow-color);
   display: flex;

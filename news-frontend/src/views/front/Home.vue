@@ -300,6 +300,7 @@ onMounted(() => {
 /* ========== 新闻列表卡片 ========== */
 .news-list {
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 25px;
@@ -369,6 +370,7 @@ onMounted(() => {
 .sidebar-card {
   margin-bottom: 20px;
   background: var(--bg-card);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   box-shadow: 0 4px 20px var(--shadow-color);

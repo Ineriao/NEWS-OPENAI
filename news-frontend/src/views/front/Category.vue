@@ -118,6 +118,7 @@ onMounted(() => {
 
 .news-list {
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 25px;

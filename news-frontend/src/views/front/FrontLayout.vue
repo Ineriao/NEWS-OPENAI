@@ -49,7 +49,13 @@
           </el-input>
 
           <!-- 主题切换按钮 -->
-          <el-button class="theme-toggle" circle @click="themeStore.toggleTheme">
+          <el-button
+            class="theme-toggle"
+            circle
+            @click="themeStore.toggleTheme"
+            :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'"
+            :aria-label="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'"
+          >
             <el-icon><component :is="themeStore.isDark ? 'Sunny' : 'Moon'" /></el-icon>
           </el-button>
 

@@ -21,6 +21,7 @@
 .not-found-content {
   text-align: center;
   background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 60px 80px;
