@@ -10,6 +10,9 @@ import com.news.service.NewsService;
 import com.news.vo.NewsDetailVO;
 import com.news.vo.NewsListVO;
 import com.news.vo.PageVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 新闻控制器
  */
+@Tag(name = "新闻管理", description = "新闻的增删改查、审核发布等操作")
 @RestController
 @RequestMapping("/api")
 public class NewsController {
@@ -33,6 +37,7 @@ public class NewsController {
      * 获取已发布新闻列表（带缓存）
      * GET /api/public/news
      */
+    @Operation(summary = "获取已发布新闻列表", description = "公开接口，支持分页和排序")
     @GetMapping("/public/news")
     public Result<PageVO<NewsListVO>> getPublishedNews(
             @RequestParam(required = false) Long categoryId,
@@ -49,6 +54,7 @@ public class NewsController {
      * 获取新闻详情（公开，增加浏览量）
      * GET /api/public/news/{id}
      */
+    @Operation(summary = "获取新闻详情", description = "公开接口，会增加浏览量")
     @GetMapping("/public/news/{id}")
     public Result<NewsDetailVO> getPublicNewsDetail(@PathVariable Long id) {
         NewsDetailVO detail = newsService.getDetailAndView(id);
@@ -66,6 +72,7 @@ public class NewsController {
      * 搜索新闻（使用 Elasticsearch）
      * GET /api/public/news/search?keyword=xxx
      */
+    @Operation(summary = "搜索新闻", description = "使用 ES 全文检索，支持标题/摘要/内容搜索")
     @GetMapping("/public/news/search")
     public Result<PageVO<NewsListVO>> searchNews(
             @RequestParam String keyword,
@@ -142,6 +149,7 @@ public class NewsController {
      * 创建新闻
      * POST /api/news
      */
+    @Operation(summary = "创建新闻", description = "需要编辑权限，创建为草稿状态")
     @PostMapping("/news")
     public Result<News> createNews(HttpServletRequest request,
                                    @RequestBody NewsDTO dto) {

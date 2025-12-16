@@ -56,7 +56,12 @@ public class WebConfig implements WebMvcConfigurer {
         // 1. 速率限制拦截器（最先执行）
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/error", "/uploads/**");
+                .excludePathPatterns(
+                        "/error",
+                        "/uploads/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                );
 
         // 2. JWT 认证拦截器
         registry.addInterceptor(jwtInterceptor)
@@ -65,7 +70,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/**",      // 登录注册
                         "/api/public/**",    // 公开接口
                         "/uploads/**",       // 静态资源
-                        "/error"             // 错误页面
+                        "/error",            // 错误页面
+                        "/swagger-ui/**",    // Swagger UI
+                        "/v3/api-docs/**"    // OpenAPI 文档
                 );
     }
 }

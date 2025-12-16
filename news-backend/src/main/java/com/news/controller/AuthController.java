@@ -8,6 +8,8 @@ import com.news.entity.User;
 import com.news.service.UserService;
 import com.news.vo.LoginVO;
 import com.news.vo.UserVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * 处理登录、注册等不需要认证的接口
  * 路径以 /api/auth 开头，会被 JWT 拦截器排除
  */
+@Tag(name = "用户认证", description = "登录、注册、用户名检查")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -28,6 +31,7 @@ public class AuthController {
      * POST /api/auth/register
      * 限制：同一IP每分钟最多5次
      */
+    @Operation(summary = "用户注册", description = "注册新用户，同一IP每分钟最多5次")
     @PostMapping("/register")
     @RateLimit(limit = 5, period = 60)
     public Result<UserVO> register(@RequestBody RegisterDTO dto) {
@@ -44,6 +48,7 @@ public class AuthController {
      * POST /api/auth/login
      * 限制：同一IP每分钟最多10次（防止暴力破解）
      */
+    @Operation(summary = "用户登录", description = "登录获取 JWT Token")
     @PostMapping("/login")
     @RateLimit(limit = 10, period = 60)
     public Result<LoginVO> login(@RequestBody LoginDTO dto) {
@@ -60,6 +65,7 @@ public class AuthController {
      * GET /api/auth/check-username?username=xxx
      * 限制：同一IP每分钟最多30次
      */
+    @Operation(summary = "检查用户名", description = "检查用户名是否已被注册")
     @GetMapping("/check-username")
     @RateLimit(limit = 30, period = 60)
     public Result<Boolean> checkUsername(@RequestParam String username) {
