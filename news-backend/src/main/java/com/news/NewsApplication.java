@@ -3,13 +3,18 @@ package com.news;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * Spring Boot 启动类
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        ElasticsearchDataAutoConfiguration.class,
+        ElasticsearchRepositoriesAutoConfiguration.class
+})
 @MapperScan("com.news.dao")
 @EnableTransactionManagement
 @EnableScheduling

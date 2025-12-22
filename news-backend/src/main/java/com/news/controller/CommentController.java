@@ -131,4 +131,24 @@ public class CommentController {
         PageVO<UserCommentVO> result = commentService.getUserComments(userId, pageNum, pageSize);
         return Result.success(result);
     }
+
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 管理员获取所有评论列表（分页）
+     * GET /api/comments/admin
+     */
+    @GetMapping("/comments/admin")
+    public Result<PageVO<UserCommentVO>> getAllComments(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Integer role = (Integer) request.getAttribute("role");
+        if (role == null || role < 2) {
+            return Result.forbidden("无权限访问");
+        }
+
+        PageVO<UserCommentVO> result = commentService.getAllComments(page, size);
+        return Result.success(result);
+    }
 }

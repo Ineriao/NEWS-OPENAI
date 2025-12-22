@@ -236,4 +236,20 @@ public class CommentServiceImpl implements CommentService {
     public boolean checkLiked(Long commentId, Long userId) {
         return commentLikeMapper.checkLiked(commentId, userId) > 0;
     }
+
+    @Override
+    public PageVO<UserCommentVO> getAllComments(int pageNum, int pageSize) {
+        Page<Comment> page = new Page<>(pageNum, pageSize);
+        // 查询所有评论（按时间倒序）
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Comment::getCreateTime);
+        IPage<Comment> result = commentMapper.selectPage(page, wrapper);
+
+        List<UserCommentVO> voList = result.getRecords().stream()
+                .map(UserCommentVO::fromComment)
+                .collect(Collectors.toList());
+
+        return PageVO.of(voList, result.getTotal(), result.getPages(),
+                result.getCurrent(), result.getSize());
+    }
 }

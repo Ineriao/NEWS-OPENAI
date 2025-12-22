@@ -60,4 +60,11 @@ public interface CommentService {
      * 检查用户是否已点赞评论
      */
     boolean checkLiked(Long commentId, Long userId);
+
+    /**
+     * 获取所有评论列表（管理员分页）
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     */
+    PageVO<UserCommentVO> getAllComments(int pageNum, int pageSize);
 }

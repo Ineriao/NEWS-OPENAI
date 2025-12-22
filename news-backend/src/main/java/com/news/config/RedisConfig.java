@@ -7,8 +7,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.news.common.CacheConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -25,10 +30,42 @@ import java.util.Map;
 
 /**
  * Redis 缓存配置类
+ * 支持 Redis 不可用时优雅降级（缓存失败不影响业务）
  */
 @Configuration
 @EnableCaching
-public class RedisConfig {
+public class RedisConfig extends CachingConfigurerSupport {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
+
+    /**
+     * 缓存错误处理器
+     * Redis 不可用时，缓存操作会失败但不抛异常，业务正常执行
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
+                log.warn("Redis 缓存读取失败，降级到数据库查询: cache={}, key={}", cache.getName(), key);
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
+                log.warn("Redis 缓存写入失败: cache={}, key={}", cache.getName(), key);
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
+                log.warn("Redis 缓存删除失败: cache={}, key={}", cache.getName(), key);
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException e, Cache cache) {
+                log.warn("Redis 缓存清空失败: cache={}", cache.getName());
+            }
+        };
+    }
 
     /**
      * 配置 RedisTemplate

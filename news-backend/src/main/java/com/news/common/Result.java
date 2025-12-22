@@ -58,6 +58,11 @@ public class Result<T> {
         return new Result<>(403, "权限不足", null);
     }
 
+    /** 无权限（自定义消息） */
+    public static <T> Result<T> forbidden(String message) {
+        return new Result<>(403, message, null);
+    }
+
     /** 资源不存在 */
     public static <T> Result<T> notFound(String message) {
         return new Result<>(404, message, null);
